@@ -1,0 +1,27 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local settings and logs
+.env
+.env.*
+!.env.example
+logs/
+*.log
+calibration/local/
+config/local/
+
+# Generated simulation output
+outputs/
+renders/
+*.mp4
+*.gif
+
+# Windows/macOS
+Thumbs.db
+.DS_Store

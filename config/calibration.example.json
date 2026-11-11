@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "purpose": "template_only_not_for_hardware_commands",
+  "robot": {
+    "model": "Dobot CR5AF",
+    "controller": "CC262",
+    "flange_to_gripper": {
+      "translation_m_xyz": null,
+      "quaternion_wxyz": null,
+      "measurement_source": null
+    }
+  },
+  "gripper": {
+    "motor_model": "DM-J4310-2EC",
+    "motor_revision": "V1.2",
+    "can_type": "Classic CAN",
+    "can_bitrate_bps": 1000000,
+    "motor_id": null,
+    "master_id": null,
+    "mapping_direction": null,
+    "motor_position_rad": {
+      "measured_open": null,
+      "measured_closed": null,
+      "safe_open_command": null,
+      "safe_closed_command": null
+    },
+    "jaw_opening_mm": {
+      "measured_open": null,
+      "measured_closed": null
+    },
+    "samples": [],
+    "measured_at": null,
+    "hardware_revision": null,
+    "notes": []
+  }
+}
