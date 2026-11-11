@@ -1,0 +1,25 @@
+{
+  "time": "2026-11-10T20:40:52.432302",
+  "tests": [
+    {
+      "name": "identity",
+      "request": "d5 4d 49 51 01 00 60 e1",
+      "raw": "d5 4d 47 50 01 01 00 10 00 00 80 3f 00 00 00 00 20",
+      "decoded": {
+        "event": 1,
+        "result": 1,
+        "motor_error": 0,
+        "flags": 16,
+        "verified_disabled": false,
+        "position_rad": 1.0,
+        "target_rad": 0.0,
+        "packet_hex": "D5 4D 47 50 01 01 00 10 00 00 80 3F 00 00 00 00 20"
+      }
+    },
+    {
+      "name": "status",
+      "request": "d5 4d 53 51 01 00 00 9b",
+      "error": "TimeoutError('no d5 4d 52 50 response within 4s')"
+    }
+  ]
+}

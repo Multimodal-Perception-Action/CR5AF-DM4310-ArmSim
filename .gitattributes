@@ -7,3 +7,7 @@
 *.obj binary
 *.pdf binary
 *.png binary
+*.3mf binary
+*.ipt binary
+*.iam binary
+*.dwg binary

@@ -1,0 +1,12 @@
+{
+  "timestamp_utc": "2026-11-11T14:01:07.903677+00:00",
+  "probe": "gateway identity only",
+  "host": "--help",
+  "port": 60000,
+  "request_hex": "D5 4D 49 51 01 00 60 E1",
+  "motor_command_sent": false,
+  "can_status_request_sent": false,
+  "passed": false,
+  "error": "gaierror: [Errno 11001] getaddrinfo failed",
+  "log_file": "D:\\Desktop\\robot\\logs\\dm_gateway_identity_20261111_220110.json"
+}
