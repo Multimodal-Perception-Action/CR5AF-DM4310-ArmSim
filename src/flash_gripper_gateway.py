@@ -1,4 +1,4 @@
-"""Guarded uploader for the T-CAN485 DM4310 build 1.5 firmware.
+"""Guarded uploader for the T-CAN485 DM4310 build 4.6 firmware.
 
 Default is a read-only preflight. Flashing requires both --flash and the exact
 confirmation token. The U-Arm CH343 (VID:PID 1A86:55D3) is never accepted.
@@ -6,8 +6,10 @@ confirmation token. The U-Arm CH343 (VID:PID 1A86:55D3) is never accepted.
 from __future__ import annotations
 
 import argparse
+from contextlib import ExitStack
 from datetime import datetime, timezone
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import socket
@@ -22,12 +24,11 @@ from gripper import (
     decode_gateway_event, load_config, receive_packet,
 )
 from uarm_dobot_teleop import FeedbackStream
+from uarm_cr5_continuous_teleop import ProcessMutex
 
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT = ROOT / "firmware/tcan485_dm4310_read_probe"
-BINARY = PROJECT / ".pio/build/esp32dev/firmware.bin"
-PIO = ROOT / ".venv-platformio/Scripts/pio.exe"
-EXPECTED_SHA256 = "8E53ABDF39FD750A421A98CC505FB682B9989CE514A8809815839A081C358F7A"
+EXPECTED_SHA256 = "BEEF14C39410AA1D4C057CC33DA6659185CBF9101F7EA2515F26FAA5BE2083BF"
 CONFIRM = "I_UNDERSTAND_TCAN485_FIRMWARE_WILL_BE_REPLACED"
 CH9102_VID_PID = (0x1A86, 0x55D4)
 UARM_CH343_VID_PID = (0x1A86, 0x55D3)
@@ -35,6 +36,46 @@ UARM_CH343_VID_PID = (0x1A86, 0x55D3)
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def resolve_binary(project: Path = PROJECT) -> Path:
+    """Use the shipped reviewed image, or the local developer build.
+
+    A present prebuilt image is never silently replaced by another image if
+    its hash fails. No build step is allowed in the upload path.
+    """
+    prebuilt = project / "prebuilt/firmware.bin"
+    if prebuilt.is_file():
+        return prebuilt
+    built = project / ".pio/build/esp32dev/firmware.bin"
+    if built.is_file():
+        return built
+    raise FileNotFoundError("Reviewed firmware.bin missing from prebuilt and local build directories")
+
+
+def verify_binary(binary: Path) -> str:
+    digest = hashlib.sha256(binary.read_bytes()).hexdigest().upper()
+    if digest != EXPECTED_SHA256:
+        raise RuntimeError("firmware hash does not match the reviewed build")
+    return digest
+
+
+def upload_verified_binary(binary: Path, port: str) -> subprocess.CompletedProcess:
+    """Upgrade only the application on an already configured gateway.
+
+    ESP32 bootloader/partition provisioning is deliberately not performed by
+    this updater. The caller must complete the normal hardware preflight.
+    """
+    if importlib.util.find_spec("esptool") is None:
+        raise RuntimeError("esptool is missing; run the delivery package INSTALL.bat first")
+    # Recheck immediately before invoking the uploader; unlike `pio upload`,
+    # esptool writes this exact file and never compiles a different image.
+    verify_binary(binary)
+    command = [sys.executable, "-m", "esptool", "--chip", "esp32",
+               "--port", port, "--baud", "921600", "--before", "default_reset",
+               "--after", "hard_reset", "write_flash", "0x10000", str(binary)]
+    return subprocess.run(command, cwd=ROOT, capture_output=True,
+                          text=True, encoding="utf-8", errors="replace", timeout=180)
 
 
 def find_gateway_port() -> dict[str, object]:
@@ -125,51 +166,51 @@ def main(argv=None) -> int:
         "expected_sha256": EXPECTED_SHA256,
     }
     code = 1
+    locks = ExitStack()
     try:
-        actual_hash = hashlib.sha256(BINARY.read_bytes()).hexdigest().upper()
-        report["binary"] = str(BINARY)
+        # Share the live controller's lock through preflight/upload/verification.
+        # A Start click cannot race a gateway restart after the idle check.
+        locks.enter_context(ProcessMutex())
+        binary = resolve_binary()
+        actual_hash = verify_binary(binary)
+        report["binary"] = str(binary)
         report["actual_sha256"] = actual_hash
-        if actual_hash != EXPECTED_SHA256:
-            raise RuntimeError("firmware hash does not match the reviewed build")
         report["gateway_port"] = find_gateway_port()
         report["preflight"] = require_safe_preflight(args.host)
         if not args.flash:
             report["result"] = "read-only preflight passed; firmware not changed"
             code = 0
         else:
-            if not PIO.exists():
-                raise RuntimeError(f"PlatformIO executable missing: {PIO}")
-            command = [str(PIO), "run", "-d", str(PROJECT), "-e", "esp32dev",
-                       "-t", "upload", "--upload-port",
-                       str(report["gateway_port"]["device"])]
-            completed = subprocess.run(command, cwd=ROOT, capture_output=True,
-                                       text=True, encoding="utf-8", errors="replace")
+            report["upload_method"] = "esptool verified application only at 0x10000; no rebuild"
+            completed = upload_verified_binary(binary, str(report["gateway_port"]["device"]))
             report["upload_exit_code"] = completed.returncode
             report["upload_stdout"] = completed.stdout[-12000:]
             report["upload_stderr"] = completed.stderr[-4000:]
             if completed.returncode != 0:
-                raise RuntimeError("PlatformIO upload failed")
+                raise RuntimeError("esptool upload failed")
             deadline = time.monotonic()+15.0
             observed = None
             last_error = None
             while time.monotonic() < deadline:
                 try:
                     observed = identity(args.host)
-                    if abs(float(observed["position_rad"])-1.5) < .01:
+                    if abs(float(observed["position_rad"])-4.6) < .01:
                         break
                 except Exception as exc:
                     last_error = f"{type(exc).__name__}: {exc}"
                 time.sleep(.5)
             report["post_flash_identity"] = observed
             report["post_flash_identity_last_error"] = last_error
-            if observed is None or abs(float(observed["position_rad"])-1.5) >= .01:
-                raise RuntimeError("build 1.5 network identity was not observed after upload")
+            if observed is None or abs(float(observed["position_rad"])-4.6) >= .01:
+                raise RuntimeError("build 4.6 network identity was not observed after upload")
             report["post_flash_dm4310"] = dm_status(args.host)
-            report["result"] = "build 1.5 flashed; read-only identity/status passed"
+            report["result"] = "build 4.6 flashed; read-only identity/status passed"
             code = 0
     except Exception as exc:
         report["error"] = f"{type(exc).__name__}: {exc}"
     finally:
+        locks.close()
+        (ROOT / "logs").mkdir(parents=True, exist_ok=True)
         report["completed_at_utc"] = utc_now()
         log = ROOT / "logs" / f"gripper_gateway_flash_{datetime.now():%Y%m%d_%H%M%S}.json"
         log.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

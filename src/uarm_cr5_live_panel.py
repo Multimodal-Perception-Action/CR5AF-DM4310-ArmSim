@@ -17,6 +17,7 @@ import sys
 import time
 import tkinter as tk
 from tkinter import messagebox, ttk
+from device_connection import load_connection_settings
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIRM = "I_UNDERSTAND_CONTINUOUS_CR5_WILL_MOVE"
@@ -60,6 +61,7 @@ class LivePanel:
         self.joint_readout = tk.StringVar(value="尚无本轮实机反馈")
         self.last_error = tk.StringVar(value="")
         self.arm_only = tk.BooleanVar(value=False)
+        self.connection_settings = load_connection_settings(ROOT)
         config = json.loads((ROOT / "config/uarm_dobot_teleop.json").read_text(encoding="utf-8"))
         self.default_signs = list(config["joint_signs"])
         self.enabled = [tk.BooleanVar(value=True) for _ in range(6)]
@@ -238,6 +240,8 @@ class LivePanel:
             self.console = (run_dir / "console.txt").open("w", encoding="utf-8")
             command = [
                 sys.executable, "-u", str(ROOT / "src/uarm_cr5_continuous_teleop.py"),
+                "--host", self.connection_settings["robot_host"],
+                "--port", self.connection_settings["leader_port"],
                 "--live-output", "--enable-robot", "--confirm", CONFIRM,
                 "--stop-file", str(self.stop_path), "--heartbeat-file", str(self.heartbeat),
                 "--telemetry-log", str(self.stream), "--joints", ",".join(selected),
@@ -414,6 +418,7 @@ class LivePanel:
         command = [
             sys.executable,
             str(ROOT / "src/cr5_return_home.py"),
+            "--host", self.connection_settings["robot_host"],
             "--execute",
             "--confirm",
             RECOVERY_CONFIRM,

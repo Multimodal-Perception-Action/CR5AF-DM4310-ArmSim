@@ -7,9 +7,13 @@ import trimesh
 from scipy.spatial.transform import Rotation
 
 ROOT = Path(__file__).resolve().parents[1]
-PACKAGE = ROOT / 'uarm_cr10a_teleop_sim/uarm_cr10a_teleop_sim'
+PACKAGE = ROOT / 'models/source/uarm_cr10a_teleop_sim'
+if not PACKAGE.is_dir():
+    PACKAGE = ROOT / 'uarm_cr10a_teleop_sim/uarm_cr10a_teleop_sim'
 SOURCE = PACKAGE / 'models/urdf/uarm_config2_kinematic.urdf'
-OFFICIAL = ROOT / 'uarm_cr10a_teleop_sim/LeRobot-Anything-U-Arm-main/mechanical/Feetech_servo/Config2_STL'
+OFFICIAL = ROOT / 'models/source/LeRobot-Anything-U-Arm/mechanical/Feetech_servo/Config2_STL'
+if not OFFICIAL.is_dir():
+    OFFICIAL = ROOT / 'uarm_cr10a_teleop_sim/LeRobot-Anything-U-Arm-main/mechanical/Feetech_servo/Config2_STL'
 DEST = ROOT / 'simulation/generated/uarm_repaired'
 SHIFT = np.array([-.14275045585632323, -.12785960578918457, -.05297554016113282])
 

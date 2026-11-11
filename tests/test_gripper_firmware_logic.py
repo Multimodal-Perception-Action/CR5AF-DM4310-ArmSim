@@ -41,6 +41,7 @@ class FirmwareLogicTests(unittest.TestCase):
                     result = subprocess.run(prefix + ['wslpath', '-a',
                                                        str(path)],
                                             capture_output=True, text=True,
+                                            encoding='utf-8',
                                             check=True, timeout=10)
                     return result.stdout.strip()
 
@@ -52,9 +53,11 @@ class FirmwareLogicTests(unittest.TestCase):
             else:
                 self.skipTest('No installed native/WSL C++ compiler')
             built = subprocess.run(command, capture_output=True, text=True,
+                                   encoding='utf-8', errors='replace',
                                    timeout=60)
             self.assertEqual(built.returncode, 0, built.stdout + built.stderr)
             completed = subprocess.run(run, capture_output=True, text=True,
+                                       encoding='utf-8', errors='replace',
                                        timeout=30)
             self.assertEqual(completed.returncode, 0,
                              completed.stdout + completed.stderr)

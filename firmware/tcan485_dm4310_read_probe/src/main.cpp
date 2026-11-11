@@ -115,6 +115,7 @@ static uint8_t xor_checksum(const uint8_t *data, size_t length) {
   for (size_t i = 0; i < length; ++i) checksum ^= data[i];
   return checksum;
 }
+
 static void print_hex_byte(uint8_t value) {
   if (value < 0x10) Serial.print('0');
   Serial.print(value, HEX);
@@ -1183,4 +1184,4 @@ void loop() {
   poll_can_alerts();
   poll_can();
   delay(1);
-}\n
+}

@@ -1,6 +1,6 @@
 """Network-only CR5AF -> RS485 -> T-CAN485 -> DM-J4310 gripper CLI.
 
-Runtime control uses only TCP port 60000. No local serial port is opened.
+Runtime control uses only TCP port 60000. COM6/USB is not opened or required.
 """
 from __future__ import annotations
 
@@ -280,7 +280,7 @@ def run_action(host: str, action: str, timeout: float, *,
     passed = False
     report: dict[str, object] = {
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "transport": "TCP60000 only; local serial ports unused",
+        "transport": "TCP60000 only; COM6/USB unused",
         "action": action,
         "request_hex": PACKETS[action].hex(" ").upper(),
         "hold_seconds": hold_seconds,
@@ -444,7 +444,7 @@ def run_action(host: str, action: str, timeout: float, *,
 def main() -> int:
     parser = argparse.ArgumentParser(description="DM-J4310 gripper controller")
     parser.add_argument("action", choices=("status", "open", "close", "stop"))
-    parser.add_argument("--host", help="robot controller address (required for live access)")
+    parser.add_argument("--host", default="192.168.201.1")
     parser.add_argument("--timeout", type=float, default=15.0)
     parser.add_argument("--hold-seconds", type=float, default=None,
                         help="explicit timed hold followed by STOP/disable; "
@@ -456,8 +456,6 @@ def main() -> int:
         if args.action not in ("open", "close"):
             raise SystemExit("--dry-run is supported for open or close")
         return dry_run(args.action, config)
-    if not args.host:
-        parser.error("--host is required for live access")
     if args.action == "status":
         return run_status(args.host, args.timeout, config)
     return run_action(args.host, args.action, args.timeout,

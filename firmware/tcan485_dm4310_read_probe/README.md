@@ -1,8 +1,77 @@
 # T-CAN485 DM4310 guarded probe
 
-## Guarded gateway build 1.5 guarded-feedback-tolerance
+## Delivery version: guarded gateway build 4.6
 
-The current source keeps the 1.x network protocol and all allow-lists,
+The release image is `prebuilt/firmware.bin` in the delivery package, with
+SHA-256 `BEEF14C39410AA1D4C057CC33DA6659185CBF9101F7EA2515F26FAA5BE2083BF`.
+It matches the 4.6 source in this directory and the current host programs.
+The gateway identity's diagnostic `position_rad` is `4.6`. This value is a
+firmware version marker, not a motor position.
+
+Build 4.6 retains one enabled gripper session across normal open/close
+reversals. Contact can lead to low-force holding without requiring the
+gripper to reach the fully closed endpoint. It also handles a missed CAN
+reply during reversal by requesting fresh status within bounded retries;
+real feedback loss, motor faults, excessive speed/temperature, STOP and
+missing heartbeats still stop the session. Event `0x20` reports CAN recovery
+diagnostics, not motion completion. Current implementation and limits are
+in `src/main.cpp` and `src/gripper_session_logic.h`; historical values below
+are not the 4.6 configuration.
+
+### Updating an already configured gateway
+
+Run the delivery package's `INSTALL.bat` first. The guarded uploader uses
+the bundled `esptool` package and selects `prebuilt/firmware.bin` first (the
+developer `.pio/build/esp32dev/firmware.bin` is only a fallback when no
+prebuilt file exists). It checks the reviewed hash, takes the same process
+lock as teleoperation, detects the CH9102 adapter, and checks idle/disabled
+CR5 and DM feedback before any upload. The U-Arm CH343 is never an upload
+target. It rechecks the hash immediately before writing the exact application
+image with esptool to `0x10000`; it does not rebuild the file during upload.
+
+From the package root, a read-only preflight is:
+
+```powershell
+.\.venv\Scripts\python.exe .\src\flash_gripper_gateway.py
+```
+
+The uploader requires the explicit `--flash` option and its exact confirmation
+token to write firmware. Opening a control panel or running `INSTALL.bat`
+does not update firmware. The upload restarts the gateway and then verifies
+its 4.6 identity and disabled motor status.
+
+This application-only updater is for an existing, configured T-CAN485 with
+the compatible ESP32 bootloader/partition layout and a working TCP/RS485/CAN
+path. A factory-new or blank board cannot pass its network preflight. It
+does not erase flash, provision a bootloader/partition table, configure the
+controller's TCP60000/tool-RS485 path, or install USB drivers. The supplied
+`prebuilt/bootloader.bin` and `prebuilt/partitions.bin` are retained for
+engineering provenance; they are not automatically flashed.
+
+### Source rebuilds
+
+Rebuilding firmware requires PlatformIO Core and the ESP32/Arduino toolchain
+specified by `platformio.ini` (`espressif32@6.11.0`). The runtime delivery
+installer does not install that compiler toolchain. On a developer machine
+with PlatformIO and its platform packages available:
+
+```powershell
+python -m platformio run -d firmware/tcan485_dm4310_read_probe -e esp32dev
+```
+
+A rebuild may have a different hash. It must be reviewed and validated as a
+new firmware release before changing `EXPECTED_SHA256` in the guarded
+uploader. Do not remove that hash check to upload an unreviewed build.
+
+## Historical development notes: builds 0.8 to 1.5
+
+The following records describe older experiments only. Their versions,
+endpoint/speed values, COM assignments and upload commands are not current
+4.6 setup instructions.
+
+### Guarded gateway build 1.5 guarded-feedback-tolerance
+
+The historical 1.5 source kept the 1.x network protocol and all allow-lists,
 feedback checks, endpoint limits, emergency stop handling, timeout, and final
 disable verification. The fixed gripper ramp step is increased from 0.04 rad
 to 0.10 rad, with 10 ms pacing and feedback validation on every step. The hold

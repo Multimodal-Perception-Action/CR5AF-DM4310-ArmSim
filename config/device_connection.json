@@ -1,0 +1,4 @@
+{
+  "robot_host": "192.168.201.1",
+  "leader_port": "auto"
+}

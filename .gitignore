@@ -34,3 +34,7 @@ Thumbs.db
 **/.github_token
 **/Vpn Tokens*
 **/Trust Tokens*
+
+# Local release payload caches and generated archives
+packaging/cache/
+dist/

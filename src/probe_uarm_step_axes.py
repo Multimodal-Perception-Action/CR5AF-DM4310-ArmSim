@@ -5,7 +5,13 @@ import json
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-STEP = ROOT / 'uarm_cr10a_teleop_sim/LeRobot-Anything-U-Arm-main/mechanical/Feetech_servo/Config2_STL/config2.STEP'
+MODEL_SOURCE = ROOT / 'models/source/LeRobot-Anything-U-Arm/mechanical/Feetech_servo/Config2_STL'
+if not MODEL_SOURCE.is_dir():
+    MODEL_SOURCE = ROOT / 'uarm_cr10a_teleop_sim/LeRobot-Anything-U-Arm-main/mechanical/Feetech_servo/Config2_STL'
+PACKAGE = ROOT / 'models/source/uarm_cr10a_teleop_sim'
+if not PACKAGE.is_dir():
+    PACKAGE = ROOT / 'uarm_cr10a_teleop_sim/uarm_cr10a_teleop_sim'
+STEP = MODEL_SOURCE / 'config2.STEP'
 
 
 class Step:
@@ -54,7 +60,7 @@ class Step:
 
 def audit():
     step=Step(); rows=[]
-    old=json.loads((ROOT/'uarm_cr10a_teleop_sim/uarm_cr10a_teleop_sim/config/kinematic_verification.json').read_text())['uarm_config2']
+    old=json.loads((PACKAGE/'config/kinematic_verification.json').read_text(encoding='utf-8'))['uarm_config2']
     old_axes={e['instance']:e for e in old['servo_axis_evidence']}
     old_axes['NAUO14']=old['gripper_servo_axis']
     roots=['NAUO4','NAUO5','NAUO6','NAUO8','NAUO11','NAUO12','NAUO14']

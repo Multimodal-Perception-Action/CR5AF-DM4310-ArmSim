@@ -3,7 +3,7 @@
   "status": "physical_endpoints_confirmed_preview_ready",
   "leader": {
     "adapter": "FE-URT-2",
-    "port_detection": "auto_by_CH343_VID_PID_and_known_serial",
+    "port_detection": "auto_by_unique_CH343_VID_PID_or_explicit_port",
     "baud": 1000000,
     "servo_id": 7,
     "encoder_ticks_per_turn": 4096

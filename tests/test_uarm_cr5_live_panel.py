@@ -48,6 +48,8 @@ class PanelLifecycleTests(unittest.TestCase):
         self.ui.start()
         self.spawn.assert_called_once()
         args = self.spawn.call_args.args[0]
+        self.assertEqual(args[args.index("--host") + 1], "192.168.201.1")
+        self.assertEqual(args[args.index("--port") + 1], "auto")
         self.assertIn("--joint-signs=-1,-1,1,1,1,1", args)
         self.assertIn("--joint-sources=1,2,3,4,5,6", args)
         self.assertIn("--joint-scales=1,1,1,1,1,1", args)
@@ -84,11 +86,25 @@ class PanelLifecycleTests(unittest.TestCase):
     def test_stop_file_failure_still_withdraws_heartbeat(self):
         self.ui.start()
         with patch.object(Path, "write_text", side_effect=OSError("disk error")):
-            self.ui.stop()
+            self.ui.emergency_stop()
         self.assertIsNotNone(self.ui.stop_requested_at)
         with patch.object(self.ui, "write_heartbeat") as heartbeat:
             self.ui.tick()
         heartbeat.assert_not_called()
+
+    def test_deployment_connection_targets_reach_controller_and_recovery(self):
+        connection = self.workspace / "config/device_connection.json"
+        connection.write_text(json.dumps({"robot_host": "192.168.10.2", "leader_port": "COM12"}), encoding="utf-8")
+        self.ui.connection_settings = panel.load_connection_settings(self.workspace)
+        self.ui.start()
+        args = self.spawn.call_args.args[0]
+        self.assertEqual(args[args.index("--host") + 1], "192.168.10.2")
+        self.assertEqual(args[args.index("--port") + 1], "COM12")
+        self.ui.process = None  # Fake child only; no real process is created.
+        with patch.object(panel.messagebox, "askyesno", return_value=True):
+            self.ui.recover_collision()
+        args = self.spawn.call_args.args[0]
+        self.assertEqual(args[args.index("--host") + 1], "192.168.10.2")
 
     def test_stale_live_telemetry_requests_stop(self):
         self.ui.start()

@@ -961,8 +961,7 @@ def csv_floats(value):
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--host',
-                        help='robot controller address (required when starting the program)')
+    parser.add_argument('--host', default='192.168.201.1')
     parser.add_argument('--port', default='auto')
     parser.add_argument('--live-output', action='store_true')
     parser.add_argument('--arm-only', action='store_true',
@@ -1003,8 +1002,6 @@ def parse_args(argv=None):
 
 def main(argv=None):
     args = parse_args(argv)
-    if not args.host:
-        raise SystemExit('--host is required; pass the controller address explicitly')
     config = load_config(ROOT/'config/uarm_dobot_teleop.json')
     args.joint_signs = args.joint_signs if args.joint_signs is not None else config['joint_signs']
     gripper = json.loads((ROOT/'config/uarm_gripper_calibration.json').read_text(encoding='utf-8'))
