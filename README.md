@@ -32,4 +32,6 @@ The `config/` folder includes machine-specific calibration values. Review them b
 
 The selected evidence logs contain read-only feedback/query records and preview or offline simulation captures. Movement, enable, error-clear, configuration-write, and control-stream logs are not included in this evidence set. No hardware command was sent during this repository import. No tests were run as part of the import.
 
+The 2026-11-12 supplemental update adds gripper reversal recovery, offline regression tests, and a user-reported loaded re-grip retest. It does not include the test run logs or compiled firmware. See `docs/gripper_reversal_recovery_20261112.md` and `docs/script_safety_index.md`. Live CLI programs now require the operator to pass a controller address explicitly rather than using this machine's address as a default.
+
 See `docs/verification-status.md`, `docs/tcp_mode_audit.md`, `docs/dm4310_v4_protocol_audit.md`, and `docs/can_direct_connection.md` for evidence-backed status and official references. See `docs/workspace_import_inventory.md` for the import scope.

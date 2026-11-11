@@ -43,6 +43,9 @@ TRACKING_ERROR_DEG = 3.0
 DASHBOARD_TIMEOUT_S = 3.0
 RETURN_HOME_SPEED_DEG_S = 6.0
 RETURN_HOME_TOLERANCE_DEG = 0.35
+GRIPPER_MIN_HYSTERESIS_TICKS = 20.0
+GRIPPER_ENDPOINT_DEADBAND_FRACTION = 0.25
+GRIPPER_STABLE_SAMPLES = 5
 GUARDED_LIMITS = tuple((lo + LIMIT_MARGIN_DEG, hi - LIMIT_MARGIN_DEG) for lo, hi in JOINT_LIMITS_DEG)
 
 
@@ -86,6 +89,23 @@ def ticks_seven(values):
     if len(values) != 7 or any(isinstance(v, bool) or int(v) != v or not 0 <= v < 4096 for v in values):
         raise ValueError("Expected seven encoder ticks within 0..4095")
     return [int(v) for v in values]
+
+
+def gripper_trigger_hysteresis_ticks(gripper_config):
+    """Keep the middle half of calibrated ID7 travel as a hold-last zone."""
+    endpoints = gripper_config.get('endpoints', {})
+    try:
+        opened = float(endpoints['maximum_open']['ticks'])
+        closed = float(endpoints['fully_closed']['ticks'])
+    except (KeyError, TypeError, ValueError):
+        return GRIPPER_MIN_HYSTERESIS_TICKS
+    travel = abs(closed-opened)
+    if not math.isfinite(travel) or travel <= 0:
+        return GRIPPER_MIN_HYSTERESIS_TICKS
+    return max(
+        GRIPPER_MIN_HYSTERESIS_TICKS,
+        travel*GRIPPER_ENDPOINT_DEADBAND_FRACTION,
+    )
 
 
 class ContinuousMapping:
@@ -291,12 +311,40 @@ def wait_enabled_cancellable(feedback, args, heartbeat):
     raise TimeoutError("CR5 enable feedback was not confirmed")
 
 
-def cancellable_gripper_worker(host, action, stop_event, result):
-    """Guarded action with watchdog heartbeats during contact hold."""
+class GripperTargetMailbox:
+    """Latest target only. STOP is carried by a separate, never-cleared Event."""
+    def __init__(self, action):
+        self._lock = threading.Lock()
+        self._action = action
+
+    def request(self, action):
+        if action not in ('open', 'close'):
+            raise ValueError('Gripper target must be open or close')
+        with self._lock:
+            self._action = action
+
+    def latest(self):
+        with self._lock:
+            return self._action
+
+
+def cancellable_gripper_worker(host, action, stop_event, result, targets=None):
+    """One supervised session with independent target and latched STOP channels."""
     sock = None
     events = []
+    commands = []
     sent = stopped = holding = releasing = False
-    current_action = action
+    commanded_action = action
+    targets = targets if targets is not None else GripperTargetMailbox(action)
+    started = time.monotonic()
+    last_heartbeat = None
+    heartbeat_count = 0
+    max_heartbeat_gap = 0.0
+
+    def record_command(name):
+        commands.append(dict(command=name, timestamp_utc=utc_now(),
+                             elapsed_s=time.monotonic()-started))
+
     try:
         if stop_event.is_set():
             result.update(passed=True, cancelled_before_action=True)
@@ -315,38 +363,71 @@ def cancellable_gripper_worker(host, action, stop_event, result):
         if stop_event.is_set():
             result.update(passed=True, cancelled_before_action=True)
             return
-        sock.sendall(PACKETS[action])
+        startup_reversal_supported = float(identity['position_rad']) >= 4.49
+        result['startup_reversal_supported'] = startup_reversal_supported
+        commanded_action = targets.latest()
+        # sendall can fail after delivering a prefix (or a full packet). Take
+        # cleanup responsibility before the attempt, not after its success.
         sent = True
-        result['action_sent'] = True
+        result['action_attempted'] = True
+        sock.sendall(PACKETS[commanded_action])
+        record_command(commanded_action)
+        result.update(
+            action_sent=True,
+            transition_target=commanded_action,
+            transition_pending=True,
+        )
         deadline = time.monotonic()+15
-        next_heartbeat = float('inf')
+        # The gateway may enter active control before its first hold event.
+        # Heartbeats must cover startup, ramps, contact settle and all holds.
+        next_heartbeat = time.monotonic()
         while True:
             now = time.monotonic()
             if (not holding or stopped or releasing) and now >= deadline:
                 raise TimeoutError("Gripper action/stop did not produce a terminal event")
-            # A controlled CLOSE->OPEN release remains an active, supervised
-            # motion; keep the watchdog alive until OPEN is confirmed.
-            if holding and not stopped and now >= next_heartbeat:
-                sock.sendall(PACKETS['hold_heartbeat'])
-                next_heartbeat = now + .20
+            # STOP has its own permanently latched channel. No reversal can
+            # clear it, including a new target posted while sendall is blocked.
             if stop_event.is_set() and not stopped:
-                requested_action = result.get('requested_reversal_action')
-                controlled_transition = bool(
-                    holding and requested_action in ('open', 'close')
-                    and requested_action != current_action
-                )
-                if controlled_transition:
+                sock.sendall(PACKETS['stop'])
+                record_command('stop')
+                stopped = True
+                result['stop_sent'] = True
+                deadline = time.monotonic()+3
+            if not stopped and not stop_event.is_set():
+                requested_action = targets.latest()
+                result['requested_target'] = requested_action
+                if (requested_action != commanded_action
+                        and (holding or startup_reversal_supported)):
                     sock.sendall(PACKETS[requested_action])
+                    record_command(requested_action)
+                    commanded_action = requested_action
+                    # A packet was sent even when the latest target returns to
+                    # the last confirmed state; the gateway may still be
+                    # physically reversing an in-flight transition.
                     releasing = True
-                    result['transition_pending'] = True
-                    result['controlled_transition_requested'] = requested_action
-                    stop_event.clear()
+                    result.update(
+                        transition_target=commanded_action,
+                        transition_pending=True,
+                        controlled_transition_requested=commanded_action,
+                    )
                     deadline = time.monotonic()+8
-                else:
-                    sock.sendall(PACKETS['stop'])
-                    stopped = True
-                    result['stop_sent'] = True
-                    deadline = time.monotonic()+3
+                # Legacy gateways ignore startup reversals: the latest target
+                # stays pending until the first hold rather than becoming STOP.
+            if not stopped and not stop_event.is_set() and now >= next_heartbeat:
+                sock.sendall(PACKETS['hold_heartbeat'])
+                heartbeat_at = time.monotonic()
+                if last_heartbeat is not None:
+                    max_heartbeat_gap = max(
+                        max_heartbeat_gap, heartbeat_at-last_heartbeat
+                    )
+                last_heartbeat = heartbeat_at
+                heartbeat_count += 1
+                result.update(
+                    heartbeat_count=heartbeat_count,
+                    last_heartbeat_at_utc=utc_now(),
+                    max_heartbeat_gap_s=max_heartbeat_gap,
+                )
+                next_heartbeat = heartbeat_at + .20
             try:
                 chunk = sock.recv(4096)
                 if not chunk:
@@ -359,24 +440,33 @@ def cancellable_gripper_worker(host, action, stop_event, result):
                 if packet is None:
                     break
                 event = decode_gateway_event(packet)
+                event.update(
+                    received_at_utc=utc_now(),
+                    received_elapsed_s=time.monotonic()-started,
+                    since_last_heartbeat_s=(time.monotonic()-last_heartbeat
+                                            if last_heartbeat is not None else None),
+                )
                 events.append(event)
+                if event.get('diagnostic') == 'can_exchange':
+                    result['last_can_diagnostic'] = event
+                    if event.get('recovered'):
+                        result['can_recovery_count'] = result.get('can_recovery_count', 0)+1
+                    continue
                 held_action = (
                     'open' if event['event'] == EVENTS['open'] else
                     'close' if event['event'] == EVENTS['close'] else None
                 )
-                if held_action and event.get('holding_active'):
+                if not stopped and held_action and event.get('holding_active'):
                     if not gateway_action_passed(held_action, event):
                         raise RuntimeError("Gripper active hold was not confirmed")
                     holding = True
-                    releasing = False
-                    current_action = held_action
+                    releasing = held_action != commanded_action
                     result.update(
                         current_action=held_action,
                         contact_detected=bool(event.get('contact_detected')),
                         holding_active=True,
-                        transition_pending=False,
+                        transition_pending=held_action != commanded_action,
                     )
-                    next_heartbeat = time.monotonic()
                     continue
                 if stopped and event['event'] == EVENTS['stop']:
                     passed = bool(
@@ -385,11 +475,29 @@ def cancellable_gripper_worker(host, action, stop_event, result):
                     result.update(
                         passed=passed,
                         holding_active=False,
-                        stopped_for_reversal=True,
+                        stopped_for_reversal=False,
+                        stopped_by_operator=True,
+                        transition_pending=False,
                     )
                     if not passed:
                         raise RuntimeError("Gripper stop did not confirm safe disable")
                     return
+                if not stopped and event['event'] == EVENTS['stop']:
+                    # A watchdog, feedback-limit, or other gateway-side abort is
+                    # terminal even though the host did not request STOP.  Do
+                    # not hide the actual failure behind a later host timeout.
+                    result.update(
+                        passed=False,
+                        holding_active=False,
+                        transition_pending=False,
+                        gateway_abort_event=event,
+                    )
+                    raise RuntimeError(
+                        "Gateway aborted active gripper session: "
+                        f"result={event['result']} motor_error={event['motor_error']} "
+                        f"verified_disabled={event['verified_disabled']} "
+                        f"abort_reason={event.get('abort_reason', 'unknown')}"
+                    )
                 if not stopped and held_action:
                     passed = gateway_action_passed(held_action, event)
                     result.update(
@@ -411,6 +519,7 @@ def cancellable_gripper_worker(host, action, stop_event, result):
                 pass
     finally:
         result['events'] = events
+        result['command_history'] = commands
         if sock is not None:
             sock.close()
 
@@ -431,7 +540,7 @@ def run_session(args, config, gripper_config, dm_config, report, stream):
     port = feedback = dashboard = None
     dashboard_io_healthy = True
     opened = enable_requested = False
-    worker = worker_stop = worker_result = active_action = None
+    worker = worker_stop = worker_result = active_action = worker_targets = None
     worker_recorded = False
     started = time.monotonic()
     return_home_requested = False
@@ -517,6 +626,15 @@ def run_session(args, config, gripper_config, dm_config, report, stream):
                       uarm_health_warnings=uarm_health_warnings(health, config),
                       uarm_baseline_ticks=positions, cr5_initial=compact_state(initial), dm_initial=dm_initial)
         midpoint = float(gripper_config['endpoints']['midpoint_ticks'])
+        trigger_hysteresis = gripper_trigger_hysteresis_ticks(gripper_config)
+        report['gripper_trigger'] = dict(
+            midpoint_ticks=midpoint,
+            hysteresis_ticks=trigger_hysteresis,
+            open_enter_ticks=midpoint-trigger_hysteresis,
+            close_enter_ticks=midpoint+trigger_hysteresis,
+            stable_samples=GRIPPER_STABLE_SAMPLES,
+            neutral_behavior='hold_last_confirmed_state',
+        )
         desired = 'open' if positions[6] <= midpoint else 'close'
         candidate, count = desired, 0
         last_requested = desired  # No initial action, regardless of current gripper position.
@@ -596,9 +714,23 @@ def run_session(args, config, gripper_config, dm_config, report, stream):
             if heartbeat:
                 heartbeat.check()
             reply = live_command(servo_command(mapped['output_deg'])) if args.live_output else None
-            proposed = desired_state(current[6], midpoint, 20, desired)
+            # A dashboard reply may block while STOP is requested. Check again
+            # before publishing any gripper target, not only when starting its
+            # worker, so an existing grasp cannot reverse after cancellation.
+            request = stop_request_kind(args.stop_file)
+            if request:
+                return_home_requested = request == 'return_home'
+                report.update(passed=True, stop_reason=(
+                    'return_home_requested' if return_home_requested else 'operator_stop'
+                ))
+                break
+            if heartbeat:
+                heartbeat.check()
+            proposed = desired_state(
+                current[6], midpoint, trigger_hysteresis, desired
+            )
             candidate, count = (candidate, count+1) if proposed == candidate else (proposed, 1)
-            if count >= 4:
+            if count >= GRIPPER_STABLE_SAMPLES:
                 desired = proposed
             if worker is not None and not worker.is_alive():
                 worker.join()
@@ -612,7 +744,7 @@ def run_session(args, config, gripper_config, dm_config, report, stream):
                     last_requested = worker_result['released_to_action']
                 elif worker_result.get('stopped_for_reversal') or worker_result.get('cancelled_before_action'):
                     last_requested = None
-                worker = worker_stop = worker_result = active_action = None
+                worker = worker_stop = worker_result = active_action = worker_targets = None
             if (
                 worker is not None and worker.is_alive()
                 and worker_result.get('current_action')
@@ -620,26 +752,33 @@ def run_session(args, config, gripper_config, dm_config, report, stream):
             ):
                 active_action = worker_result['current_action']
                 last_requested = active_action
-            if (
-                worker is not None and desired != active_action
-                and not worker_result.get('transition_pending')
-            ):
-                worker_result['requested_reversal_action'] = desired
-                worker_result['transition_pending'] = True
-                worker_stop.set()
-            if args.live_output and not args.arm_only and worker is None and count >= 4 and desired != last_requested:
+            if worker is not None and worker.is_alive():
+                # Always publish the latest stable intention, even if it
+                # returns to the current target before a prior request is read.
+                worker_targets.request(desired)
+            if (args.live_output and not args.arm_only and worker is None
+                    and count >= GRIPPER_STABLE_SAMPLES
+                    and desired != last_requested):
                 # A dashboard reply may have blocked while the operator stopped.
                 check_cancellation(args, heartbeat)
                 active_action = desired
                 last_requested = desired
                 worker_stop = threading.Event()
-                worker_result = dict(action=desired, action_sent=False, trigger_ticks=current[6])
+                worker_targets = GripperTargetMailbox(desired)
+                worker_result = dict(
+                    action=desired,
+                    action_sent=False,
+                    trigger_ticks=current[6],
+                    transition_target=desired,
+                    transition_pending=True,
+                )
                 worker_recorded = False
                 worker = threading.Thread(target=cancellable_gripper_worker,
-                    args=(args.host, desired, worker_stop, worker_result), daemon=True)
+                    args=(args.host, desired, worker_stop, worker_result, worker_targets), daemon=True)
                 worker.start()
             actual_relative = [float(v)-b for v,b in zip(state['q_actual_deg'], baseline)]
             report['max_actual_excursion_deg'] = [max(old, abs(v)) for old,v in zip(report['max_actual_excursion_deg'],actual_relative)]
+            gripper_snapshot = dict(worker_result) if worker_result is not None else {}
             write_row(stream, dict(kind='sample', continuous=True, live_output=args.live_output,
                 arm_only=args.arm_only,
                 timestamp_utc=utc_now(), sample=report['arm_sample_count'], servo_ticks=current,
@@ -654,6 +793,12 @@ def run_session(args, config, gripper_config, dm_config, report, stream):
                 limit_clipped_axes=mapped['limit_clipped_axes'],
                 follow_lag_clipped_axes=mapped['follow_lag_clipped_axes'], arm_reply=reply,
                 cr5=compact_state(state), gripper_desired=desired, gripper_active_action=active_action,
+                gripper_transition_target=gripper_snapshot.get('transition_target'),
+                gripper_contact_detected=bool(gripper_snapshot.get('contact_detected', False)),
+                gripper_holding_active=bool(gripper_snapshot.get('holding_active', False)),
+                gripper_transition_pending=bool(gripper_snapshot.get('transition_pending', False)),
+                gripper_heartbeat_count=gripper_snapshot.get('heartbeat_count', 0),
+                gripper_max_heartbeat_gap_s=gripper_snapshot.get('max_heartbeat_gap_s', 0.0),
                 gripper_command_issued=report['gripper_action_count'] > 0 or worker is not None))
             report['arm_sample_count'] += 1
             # A full period after processing prevents any catch-up burst and
@@ -665,8 +810,6 @@ def run_session(args, config, gripper_config, dm_config, report, stream):
                 raise RuntimeError('Return-home requires live output')
             home = validate_pose(args.operational_home)
             if worker_stop is not None:
-                if worker_result is not None:
-                    worker_result['requested_reversal_action'] = None
                 worker_stop.set()
             if worker is not None and worker.is_alive():
                 worker.join(timeout=7.0)
@@ -729,8 +872,6 @@ def run_session(args, config, gripper_config, dm_config, report, stream):
         report['enable_requested'] = enable_requested
         # First cancel gripper and stop the arm. Never wait for a worker before Stop.
         if worker_stop is not None:
-            if worker_result is not None:
-                worker_result['requested_reversal_action'] = None
             worker_stop.set()
         if dashboard is not None and enable_requested:
             if not dashboard_io_healthy:
@@ -820,7 +961,8 @@ def csv_floats(value):
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--host', default='192.168.201.1')
+    parser.add_argument('--host',
+                        help='robot controller address (required when starting the program)')
     parser.add_argument('--port', default='auto')
     parser.add_argument('--live-output', action='store_true')
     parser.add_argument('--arm-only', action='store_true',
@@ -861,6 +1003,8 @@ def parse_args(argv=None):
 
 def main(argv=None):
     args = parse_args(argv)
+    if not args.host:
+        raise SystemExit('--host is required; pass the controller address explicitly')
     config = load_config(ROOT/'config/uarm_dobot_teleop.json')
     args.joint_signs = args.joint_signs if args.joint_signs is not None else config['joint_signs']
     gripper = json.loads((ROOT/'config/uarm_gripper_calibration.json').read_text(encoding='utf-8'))

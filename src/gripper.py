@@ -1,6 +1,6 @@
 """Network-only CR5AF -> RS485 -> T-CAN485 -> DM-J4310 gripper CLI.
 
-Runtime control uses only TCP port 60000. COM6/USB is not opened or required.
+Runtime control uses only TCP port 60000. No local serial port is opened.
 """
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ import json
 import math
 import socket
 import struct
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -40,6 +41,16 @@ PACKETS = {
     "status": command_packet(b"\xD5\x4D\x53\x51", 0x00),
 }
 EVENTS = {"identity": 0x01, "open": 0x10, "close": 0x11, "stop": 0x12}
+GATEWAY_ABORT_REASONS = {
+    0: "none",
+    1: "heartbeat_timeout",
+    2: "can_feedback_loss",
+    3: "motor_state_or_fault",
+    4: "hard_position_limit",
+    5: "hard_speed_limit",
+    6: "over_temperature",
+    7: "action_timeout",
+}
 ERROR_STATES = {
     0x0: "disabled/no fault",
     0x1: "enabled",
@@ -122,6 +133,28 @@ def receive_packet(
 
 def decode_gateway_event(packet: bytes) -> dict[str, object]:
     position_rad, target_rad = struct.unpack("<ff", packet[8:16])
+    if packet[4] == 0x20:
+        # Diagnostic packets reuse the two float slots for milliseconds and
+        # attempt count. They carry no motor pose or action acknowledgement.
+        return {
+            "event": packet[4],
+            "result": packet[5],
+            "motor_error": packet[6],
+            "flags": packet[7],
+            "diagnostic": "can_exchange",
+            "recovered": packet[5] == 1,
+            "elapsed_ms": position_rad,
+            "attempt_count": int(target_rad),
+            "packet_hex": packet.hex(" ").upper(),
+        }
+    # The high nibble is an abort code only on a failed OPEN/CLOSE/STOP event.
+    # Other event types use those bits for capabilities (identity uses 0x10),
+    # so interpreting every packet as an abort produces false alarms.
+    failed_action = (
+        packet[4] in (EVENTS["open"], EVENTS["close"], EVENTS["stop"])
+        and packet[5] in (0x02, 0x03)
+    )
+    abort_reason_code = ((packet[7] >> 4) & 0x0F) if failed_action else 0
     return {
         "event": packet[4],
         "result": packet[5],
@@ -130,6 +163,10 @@ def decode_gateway_event(packet: bytes) -> dict[str, object]:
         "verified_disabled": bool(packet[7] & 0x01),
         "holding_active": bool(packet[7] & 0x02),
         "contact_detected": packet[5] == 0x04,
+        "abort_reason_code": abort_reason_code,
+        "abort_reason": GATEWAY_ABORT_REASONS.get(
+            abort_reason_code, "unknown"
+        ),
         "position_rad": position_rad,
         "target_rad": target_rad,
         "packet_hex": packet.hex(" ").upper(),
@@ -217,18 +254,49 @@ def run_status(host: str, timeout: float, config: dict[str, object]) -> int:
             sock.close()
 
 
-def run_action(host: str, action: str, timeout: float) -> int:
+def run_action(host: str, action: str, timeout: float, *,
+               hold_seconds: float | None = None, stop_event=None) -> int:
+    """Hold with heartbeats until explicit stop; verify STOP before exiting.
+
+    A timed release is opt-in. The default never silently drops an object just
+    because an OPEN/CLOSE acknowledgement arrived. ``stop_event`` is a latched
+    cancellation channel for embedding/tests; the CLI uses Ctrl+C.
+    """
+    if action not in ("open", "close", "stop"):
+        raise ValueError("Expected open, close or stop")
+    if not math.isfinite(timeout) or timeout <= 0:
+        raise ValueError("timeout must be finite and positive")
+    if hold_seconds is not None and (
+        not math.isfinite(hold_seconds) or hold_seconds < 0
+    ):
+        raise ValueError("hold_seconds must be finite and nonnegative")
     sock = None
     buffer = bytearray()
     action_sent = False
+    holding = False
+    action_confirmed = False
+    disabled_verified = False
+    normal_stop = False
     passed = False
     report: dict[str, object] = {
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "transport": "TCP60000 only; COM6/USB unused",
+        "transport": "TCP60000 only; local serial ports unused",
         "action": action,
         "request_hex": PACKETS[action].hex(" ").upper(),
+        "hold_seconds": hold_seconds,
+        "heartbeat_count": 0,
+        "events": [],
     }
+    if action != "stop":
+        release = ("持续保持，按 Ctrl+C 停止并失能。"
+                   if hold_seconds is None else
+                   f"到位/接触后保持 {hold_seconds:g} 秒，然后停止并失能。")
+        print(f"夹爪命令 {action}：{release}停止失能会释放保持力。",
+              file=sys.stderr, flush=True)
     try:
+        if stop_event is not None and stop_event.is_set():
+            report["cancelled_before_action"] = True
+            raise RuntimeError("Stopped before action")
         sock = socket.create_connection((host, 60000), timeout=3.0)
         sock.settimeout(0.05)
         if action != "stop":
@@ -243,29 +311,124 @@ def run_action(host: str, action: str, timeout: float) -> int:
                 and identity["result"] == 1
                 and identity["flags"] == 0x10
             ):
-                raise RuntimeError("guarded gateway build 1.0 identity mismatch")
+                raise RuntimeError("guarded gateway identity mismatch")
 
-        sock.sendall(PACKETS[action])
+        if stop_event is not None and stop_event.is_set():
+            report["cancelled_before_action"] = True
+            raise RuntimeError("Stopped before action")
+        # Take cleanup responsibility before a potentially partial send.
         action_sent = action != "stop"
-        result_packet = receive_packet(sock, buffer, GATEWAY_HEADER, timeout)
-        result = decode_gateway_event(result_packet)
-        report["result"] = result
-        passed = gateway_action_passed(action, result)
-        report["passed"] = passed
+        sock.sendall(PACKETS[action])
+        deadline = time.monotonic()+timeout
+        next_heartbeat = time.monotonic()
+        hold_deadline = None
+        while True:
+            now = time.monotonic()
+            if action != "stop" and stop_event is not None and stop_event.is_set():
+                report["stop_reason"] = "operator_stop"
+                normal_stop = True
+                break
+            if hold_deadline is not None and now >= hold_deadline:
+                report["stop_reason"] = "explicit_hold_duration_elapsed"
+                normal_stop = True
+                break
+            if not holding and now >= deadline:
+                raise TimeoutError("Gripper action did not produce a terminal/hold event")
+            # Startup and settling are supervised too, before the first event.
+            if action != "stop" and now >= next_heartbeat:
+                sock.sendall(PACKETS["hold_heartbeat"])
+                report["heartbeat_count"] += 1
+                next_heartbeat = time.monotonic()+.20
+            packet = extract_packet(buffer, GATEWAY_HEADER)
+            if packet is None:
+                try:
+                    data = sock.recv(4096)
+                except socket.timeout:
+                    continue
+                if not data:
+                    raise ConnectionError("TCP60000 closed during gripper session")
+                buffer.extend(data)
+                continue
+            event = decode_gateway_event(packet)
+            report["events"].append(event)
+            if event.get("diagnostic") == "can_exchange":
+                continue  # The following action/STOP event decides success.
+            report["result"] = event
+            if action == "stop":
+                if event["event"] != EVENTS["stop"]:
+                    continue  # A previously queued hold is not STOP confirmation.
+                disabled_verified = gateway_action_passed("stop", event)
+                passed = disabled_verified
+                if not passed:
+                    raise RuntimeError("Gripper STOP did not verify disable")
+                break
+            if event["event"] == EVENTS["stop"]:
+                disabled_verified = bool(event["verified_disabled"] and
+                                         event["motor_error"] == 0)
+                raise RuntimeError(
+                    f"Gateway stopped unexpectedly: {event['abort_reason']}"
+                )
+            if not gateway_action_passed(action, event):
+                raise RuntimeError(
+                    f"Gripper action rejected/failed: result={event['result']} "
+                    f"motor_error={event['motor_error']} "
+                    f"abort_reason={event['abort_reason']}"
+                )
+            action_confirmed = True
+            if event["holding_active"]:
+                if not holding and hold_seconds is not None:
+                    hold_deadline = time.monotonic()+hold_seconds
+                holding = True
+                report["completion_state"] = "active_hold"
+            else:
+                # Legacy one-shot firmware explicitly reports disabled completion.
+                disabled_verified = bool(event["verified_disabled"])
+                report["completion_state"] = "completed_disabled"
+                passed = disabled_verified
+                break
+    except KeyboardInterrupt:
+        report["stop_reason"] = "keyboard_interrupt"
+        normal_stop = True
     except Exception as exc:
-        report["passed"] = False
         report["error"] = f"{type(exc).__name__}: {exc}"
     finally:
-        if action_sent and not passed and sock is not None:
+        if action_sent and not disabled_verified and sock is not None:
             try:
                 sock.sendall(PACKETS["stop"])
-                report["fallback_stop_sent"] = True
+                report["stop_sent"] = True
+                stop_deadline = time.monotonic()+3.0
+                while time.monotonic() < stop_deadline:
+                    packet = receive_packet(sock, buffer, GATEWAY_HEADER,
+                                            max(.01, stop_deadline-time.monotonic()))
+                    event = decode_gateway_event(packet)
+                    report["events"].append(event)
+                    if event["event"] != EVENTS["stop"]:
+                        continue
+                    report["stop_result"] = event
+                    disabled_verified = gateway_action_passed("stop", event)
+                    if not disabled_verified:
+                        raise RuntimeError("Gripper STOP did not verify disable")
+                    break
+                if not disabled_verified:
+                    raise TimeoutError("Gripper STOP confirmation timed out")
             except Exception as stop_exc:
-                report["fallback_stop_error"] = (
+                report["stop_error"] = (
                     f"{type(stop_exc).__name__}: {stop_exc}"
                 )
+            except KeyboardInterrupt:
+                report["stop_error"] = "Interrupted while verifying disable"
+            finally:
+                sock.close()
+                sock = None
         if sock is not None:
             sock.close()
+        if normal_stop:
+            passed = action_confirmed and disabled_verified and "stop_error" not in report
+        report.update(passed=passed, action_confirmed=action_confirmed,
+                      disabled_verified=disabled_verified,
+                      holding_active=False if disabled_verified else None)
+        if normal_stop and disabled_verified:
+            report["completion_state"] = "stopped_disabled"
 
     log_dir = ROOT / "logs"
     log_dir.mkdir(exist_ok=True)
@@ -281,8 +444,11 @@ def run_action(host: str, action: str, timeout: float) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description="DM-J4310 gripper controller")
     parser.add_argument("action", choices=("status", "open", "close", "stop"))
-    parser.add_argument("--host", default="192.168.201.1")
+    parser.add_argument("--host", help="robot controller address (required for live access)")
     parser.add_argument("--timeout", type=float, default=15.0)
+    parser.add_argument("--hold-seconds", type=float, default=None,
+                        help="explicit timed hold followed by STOP/disable; "
+                             "default keeps holding until Ctrl+C")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
     config = load_config()
@@ -290,9 +456,12 @@ def main() -> int:
         if args.action not in ("open", "close"):
             raise SystemExit("--dry-run is supported for open or close")
         return dry_run(args.action, config)
+    if not args.host:
+        parser.error("--host is required for live access")
     if args.action == "status":
         return run_status(args.host, args.timeout, config)
-    return run_action(args.host, args.action, args.timeout)
+    return run_action(args.host, args.action, args.timeout,
+                      hold_seconds=args.hold_seconds)
 
 
 if __name__ == "__main__":

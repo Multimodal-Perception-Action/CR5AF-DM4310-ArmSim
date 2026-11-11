@@ -150,6 +150,7 @@ class LivePanel:
         self.editable.append(speed)
         self.editable.append(follow_lag)
         ttk.Label(body, text="启动时配对两臂当前位置；每个 CR5 关节按所选 U-Arm ID、方向、倍率和偏置跟随。仅机械臂模式不会访问 DM 网关或控制夹爪。", wraplength=1000).pack(anchor="w")
+        ttk.Label(body, text="夹爪扳机为全开/全闭两态：中间区维持上次目标，不能停在任意开度。夹住物体后低力保持；反向松开期间可再次扣动夹紧。", wraplength=1000).pack(anchor="w")
         ttk.Label(body, text="偏置按最大跟随速度逐步加入；完成或安全停止后自动扣除已执行角度，避免下次重复叠加。180°在12°/秒时至少需要15秒。", foreground="#a34100", wraplength=1000).pack(anchor="w", pady=3)
         ttk.Label(body, text="保留关节限位。反向拨动使目标离开限位，机械臂按所选限速跟随。", wraplength=1000).pack(anchor="w", pady=5)
         ttk.Label(body, text="主臂大幅快拨后，CR5 仍会继续走向目标；按停止会取消尚未完成的目标。", wraplength=900).pack(anchor="w", pady=5)
@@ -351,6 +352,21 @@ class LivePanel:
                         ]
                         if active_offsets:
                             text += "\n偏置进度：" + "   ".join(active_offsets)
+                    if not self.arm_only.get() and sample.get("kind") == "sample":
+                        names = {"open": "张开", "close": "夹紧"}
+                        target_name = names.get(sample.get("gripper_desired"), "未指定")
+                        if not sample.get("gripper_command_issued"):
+                            gripper_state = "等待扳机跨过开/闭阈值"
+                        elif sample.get("gripper_transition_pending"):
+                            gripper_state = "正在转换方向/位置"
+                        elif sample.get("gripper_contact_detected"):
+                            gripper_state = "检测到接触，低力保持"
+                        elif sample.get("gripper_holding_active"):
+                            gripper_state = "端点保持"
+                        else:
+                            gripper_state = "等待网关确认"
+                        ticks = sample.get("servo_ticks", [None] * 7)[6]
+                        text += f"\n夹爪：目标{target_name}；{gripper_state}；扳机 ID7={ticks}"
                     self.joint_readout.set(text)
                     if self.stop_requested_at is None and not terminal:
                         age = (datetime.now(timezone.utc) - datetime.fromisoformat(sample["timestamp_utc"])).total_seconds()

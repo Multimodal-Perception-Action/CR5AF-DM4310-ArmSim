@@ -20,10 +20,15 @@ This import was assembled from the local robot workspace. It keeps project sourc
 - Full upstream repository clones, the CR10A-focused teleoperation simulation archive, duplicate archives, and downloaded source archives. The audit documents retain upstream links where relevant.
 - Dobot, Damiao, and gateway vendor manuals, software installers, and other vendor-distributed files without an identified redistribution license. Use the official links in the audit documents.
 - The broad local logs tree, including motion, enable, error-clear, configuration-write, control-stream, and screenshot records. Only selected read-only status, preview, and simulation records were copied.
-- The separate local `tests/` directory and the U-Arm/CR5 continuous-control launch scripts.
+- The U-Arm/CR5 continuous-control launch scripts.
+- At initial import, the separate local `tests/` directory was omitted.
 
 ## Import checks
 
 - No known API-token patterns were found in the imported text files.
 - No user-specific absolute Windows paths were found in imported text files.
 - No repository tests were run and no robot, motor, serial port, or controller was contacted during this import.
+
+## Supplemental gripper update (2026-11-12)
+
+Added the current gripper host controller, gateway runtime source, UI status display, sanitized behavior summaries, and the focused offline regression tests under `tests/`. These are source and test fixtures only; no raw logs, compiled firmware, machine-specific network address, local serial-port name, or calibration file was added by this update. The operator reported that a loaded grip / partial release / re-grip retest completed without an unexpected stop. No hardware was contacted as part of publishing this update.

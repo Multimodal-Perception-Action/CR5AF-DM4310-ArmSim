@@ -19,6 +19,7 @@ Review these before any use. They contain or implement robot motion/enable, erro
 - `src/clear_error_once.py`
 - `src/configure_tool485.py`
 - `src/cr5_joint_smoke_test.py`, `src/cr5_return_home.py`
+- `src/gripper.py`: `status` is a read/query path; `open`, `close`, and `stop` send motor actions over TCP port 60000. `open`/`close` keep an active hold by default until Ctrl+C; `--hold-seconds` explicitly requests timed stop/disable.
 - `src/dm4310_zero_torque_enable_test.py`
 - `src/flash_gripper_gateway.py`
 - `src/uarm_cr5_axis_follow_test.py`, `src/uarm_cr5_continuous_teleop.py`, `src/uarm_cr5_full_teleop.py`, `src/uarm_cr5_joint_range_test.py`, `src/uarm_cr5_live_panel.py`
@@ -27,3 +28,5 @@ Review these before any use. They contain or implement robot motion/enable, erro
 - `firmware/tcan485_dm4310_read_probe/`
 
 This import copied source only. It did not run, build, or flash any program.
+
+The `tests/` directory contains offline tests. The firmware test compiles production logic with mocked I/O; it does not connect to a robot, gateway, motor, or serial port.

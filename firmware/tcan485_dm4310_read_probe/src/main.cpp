@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "driver/twai.h"
 #include <math.h>
+#include "gripper_session_logic.h"
 
 static constexpr gpio_num_t PIN_CAN_TX = GPIO_NUM_27;
 static constexpr gpio_num_t PIN_CAN_RX = GPIO_NUM_26;
@@ -30,13 +31,14 @@ static constexpr float TINY_MOVE_KD = 0.2F;
 // gripper mechanics stayed at the same pose.  All calibrated endpoints are
 // therefore rebased by +2*pi; physical travel and direction are unchanged.
 static constexpr float GRIPPER_OPEN_HARD_RAD = -0.147920209F;
-// Provisional replacement-gripper close ceiling.  The previous gripper's
-// measured endpoint (-1.071374075) still left a visible gap on this unit, so
-// calibration advances only in operator-authorized 0.05 rad increments.
-static constexpr float GRIPPER_CLOSED_HARD_RAD = 5.311811232F;
+// Replacement-gripper feedback ceiling.  After a commanded CLOSE is safely
+// disabled, the mechanism passively settles at 5.6273 rad (20/20 identical
+// read-only samples, motor error 0).  Accept that observed passive pose plus a
+// small margin without increasing the commanded close target below.
+static constexpr float GRIPPER_CLOSED_HARD_RAD = 5.647718013F;
 static constexpr float GRIPPER_OPEN_TARGET_RAD = -0.097920209F;
-// Keep 0.01 rad before the operator-measured closed hard endpoint.  The old
-// 0.05 rad margin left the replacement gripper visibly short of full closure.
+// Retain the existing command target; feedback tolerance is not permission
+// to increase the commanded closing travel.
 static constexpr float GRIPPER_CLOSE_TARGET_RAD = 5.301811232F;
 static constexpr float GRIPPER_REVOLUTION_RAD = 6.283185307179586F;
 static_assert(GRIPPER_CLOSE_TARGET_RAD < GRIPPER_CLOSED_HARD_RAD,
@@ -47,30 +49,23 @@ static_assert(GRIPPER_CLOSE_TARGET_RAD < GRIPPER_CLOSED_HARD_RAD,
 #ifdef GRIPPER_LEGACY_PROFILE
 static constexpr float GRIPPER_MOVE_STEP_RAD = 0.04F;
 static constexpr uint32_t GRIPPER_MOVE_DELAY_MS = 15;
-static constexpr uint8_t GRIPPER_HOLD_MAX_STEPS = 20;
 #else
 static constexpr float GRIPPER_MOVE_STEP_RAD = 0.30F;
 static constexpr uint32_t GRIPPER_MOVE_DELAY_MS = 10;
-static constexpr uint8_t GRIPPER_HOLD_MAX_STEPS = 10;
 #endif
-static constexpr uint8_t GRIPPER_HOLD_MIN_STEPS = 3;
 static constexpr float GRIPPER_MOVE_KP = 10.0F;
 static constexpr float GRIPPER_MOVE_KD = 0.2F;
 // Conservative contact hold: 0.04 rad preload at kp=4 is approximately
 // 0.16 N*m motor-side proportional demand before reducer multiplication.
-static constexpr float GRIPPER_CONTACT_PRELOAD_RAD = 0.04F;
 static constexpr float GRIPPER_CONTACT_HOLD_KP = 4.0F;
 static constexpr float GRIPPER_CONTACT_HOLD_KD = 0.2F;
 static constexpr uint32_t GRIPPER_HOLD_HEARTBEAT_TIMEOUT_MS = 750;
 static constexpr uint32_t GRIPPER_HOLD_PERIOD_MS = 20;
-// A transition can reach its final position while the measured velocity still
-// reflects the last ramp sample.  Give the low-gain hold controller a bounded
-// interval to remove that residual velocity.  All other feedback limits and
-// the host heartbeat remain mandatory during this interval.
-static constexpr uint32_t GRIPPER_HOLD_SETTLE_TIMEOUT_MS = 1200;
-// The 3x profile can briefly report up to three times the former 3.2 rad/s
-// validation ceiling.  This remains far below the configured DM VMAX=30.
-static constexpr float GRIPPER_MAX_FEEDBACK_SPEED_RAD_S = 9.6F;
+// A true runaway guard, not a normal-motion threshold.  The DM protocol is
+// configured for VMAX=30 rad/s and the 3x gripper ramp can legitimately pass
+// the former 9.6 rad/s ceiling.  Retain 20% headroom below the configured
+// protocol maximum for a genuine hard-speed shutdown.
+static constexpr float GRIPPER_MAX_FEEDBACK_SPEED_RAD_S = 24.0F;
 static constexpr uint32_t GRIPPER_MOVE_TIMEOUT_MS = 10000;
 static constexpr uint32_t CAN_ALERT_MASK =
     TWAI_ALERT_TX_SUCCESS | TWAI_ALERT_TX_FAILED | TWAI_ALERT_BUS_ERROR |
@@ -120,7 +115,6 @@ static uint8_t xor_checksum(const uint8_t *data, size_t length) {
   for (size_t i = 0; i < length; ++i) checksum ^= data[i];
   return checksum;
 }
-
 static void print_hex_byte(uint8_t value) {
   if (value < 0x10) Serial.print('0');
   Serial.print(value, HEX);
@@ -339,68 +333,8 @@ static void send_identity_response() {
 #ifdef GRIPPER_LEGACY_PROFILE
   send_gateway_event(0x01, 0x01, 0x00, 0x10, 1.1F, 0.0F);
 #else
-  send_gateway_event(0x01, 0x01, 0x00, 0x10, 3.7F, 0.0F);
+  send_gateway_event(0x01, 0x01, 0x00, 0x10, 4.6F, 0.0F);
 #endif
-}
-
-static bool emergency_stop_requested() {
-  if (RS485.available() < static_cast<int>(REQUEST_SIZE)) return false;
-  uint8_t packet[REQUEST_SIZE]{};
-  for (size_t i = 0; i < REQUEST_SIZE; ++i) {
-    packet[i] = static_cast<uint8_t>(RS485.read());
-  }
-  const bool valid =
-      memcmp(packet, SAFE_DISABLE_HEADER, sizeof(SAFE_DISABLE_HEADER)) == 0 &&
-      packet[4] == 1 && packet[5] == 0 &&
-      packet[6] == SAFE_DISABLE_GUARD &&
-      xor_checksum(packet, REQUEST_SIZE - 1) == packet[7];
-  if (valid) Serial.println("GRIPPER emergency_stop_request_received");
-  return valid;
-}
-
-enum class HoldRequest : uint8_t {
-  NONE = 0,
-  STOP = 1,
-  HEARTBEAT = 2,
-  OPEN = 3,
-  CLOSE = 4,
-};
-
-static HoldRequest read_hold_request() {
-  if (RS485.available() < static_cast<int>(REQUEST_SIZE)) {
-    return HoldRequest::NONE;
-  }
-  uint8_t packet[REQUEST_SIZE]{};
-  for (size_t i = 0; i < REQUEST_SIZE; ++i) {
-    packet[i] = static_cast<uint8_t>(RS485.read());
-  }
-  if (xor_checksum(packet, REQUEST_SIZE - 1) != packet[7] ||
-      packet[4] != 1 || packet[5] != 0) {
-    Serial.println("GRIPPER_HOLD ignored_invalid_request");
-    return HoldRequest::NONE;
-  }
-  if (memcmp(packet, SAFE_DISABLE_HEADER, sizeof(SAFE_DISABLE_HEADER)) == 0 &&
-      packet[6] == SAFE_DISABLE_GUARD) {
-    Serial.println("GRIPPER_HOLD stop_request_received");
-    return HoldRequest::STOP;
-  }
-  if (memcmp(packet, GRIPPER_HEARTBEAT_HEADER,
-             sizeof(GRIPPER_HEARTBEAT_HEADER)) == 0 &&
-      packet[6] == GRIPPER_HEARTBEAT_GUARD) {
-    return HoldRequest::HEARTBEAT;
-  }
-  if (memcmp(packet, GRIPPER_OPEN_HEADER, sizeof(GRIPPER_OPEN_HEADER)) == 0 &&
-      packet[6] == GRIPPER_OPEN_GUARD) {
-    Serial.println("GRIPPER_HOLD controlled_open_request_received");
-    return HoldRequest::OPEN;
-  }
-  if (memcmp(packet, GRIPPER_CLOSE_HEADER, sizeof(GRIPPER_CLOSE_HEADER)) == 0 &&
-      packet[6] == GRIPPER_CLOSE_GUARD) {
-    Serial.println("GRIPPER_HOLD controlled_close_request_received");
-    return HoldRequest::CLOSE;
-  }
-  Serial.println("GRIPPER_HOLD ignored_non_hold_request");
-  return HoldRequest::NONE;
 }
 
 static void drain_can_rx() {
@@ -438,6 +372,27 @@ static bool transmit_and_receive_feedback(const twai_message_t &frame,
     }
   }
   Serial.printf("SAFE_ABORT phase=%s reason=no_valid_feedback\n", phase);
+  return false;
+}
+
+// Runtime MIT setpoints are idempotent: retry the exact same frame without
+// advancing the trajectory.  A single lost reply is transport jitter, while
+// three consecutive misses (about 0.4 s total) are treated as a real CAN loss.
+static bool transmit_and_receive_feedback_guarded(
+    const twai_message_t &frame, uint16_t motor_id, MotorFeedback &feedback,
+    const char *phase, uint32_t feedback_timeout_ms = 120) {
+  static constexpr uint8_t MAX_ATTEMPTS = 3;
+  for (uint8_t attempt = 1; attempt <= MAX_ATTEMPTS; ++attempt) {
+    if (transmit_and_receive_feedback(frame, motor_id, feedback, phase,
+                                      feedback_timeout_ms)) {
+      return true;
+    }
+    if (attempt < MAX_ATTEMPTS) {
+      Serial.printf("SAFE_FEEDBACK_RETRY phase=%s attempt=%u\n", phase,
+                    static_cast<unsigned>(attempt + 1));
+      delay(5);
+    }
+  }
   return false;
 }
 
@@ -713,380 +668,199 @@ static bool select_gripper_branch(float position_rad, float &branch_offset_rad) 
   return false;
 }
 
+// Encoded into the high nibble of a failed STOP event's flags byte.  Bit 0
+// remains the independently verified-disabled flag.
+static constexpr uint8_t GRIPPER_ABORT_NONE = 0;
+static constexpr uint8_t GRIPPER_ABORT_HEARTBEAT = 1;
+static constexpr uint8_t GRIPPER_ABORT_CAN_FEEDBACK = 2;
+static constexpr uint8_t GRIPPER_ABORT_MOTOR_STATE = 3;
+static constexpr uint8_t GRIPPER_ABORT_HARD_POSITION = 4;
+static constexpr uint8_t GRIPPER_ABORT_HARD_SPEED = 5;
+static constexpr uint8_t GRIPPER_ABORT_TEMPERATURE = 6;
+
+static uint8_t gripper_feedback_abort_reason(const MotorFeedback &feedback,
+                                             float branch_offset_rad) {
+  if (feedback.error != 1) return GRIPPER_ABORT_MOTOR_STATE;
+  if (feedback.position_rad <
+          GRIPPER_OPEN_HARD_RAD + branch_offset_rad - 0.10F ||
+      feedback.position_rad >
+          GRIPPER_CLOSED_HARD_RAD + branch_offset_rad + 0.10F) {
+    return GRIPPER_ABORT_HARD_POSITION;
+  }
+  if (fabsf(feedback.velocity_rad_s) > GRIPPER_MAX_FEEDBACK_SPEED_RAD_S) {
+    return GRIPPER_ABORT_HARD_SPEED;
+  }
+  if (feedback.mos_temperature_c >= SAFE_MAX_TEMPERATURE_C ||
+      feedback.rotor_temperature_c >= SAFE_MAX_TEMPERATURE_C) {
+    return GRIPPER_ABORT_TEMPERATURE;
+  }
+  return GRIPPER_ABORT_NONE;
+}
+
 static bool gripper_feedback_ok(const MotorFeedback &feedback,
                                 float branch_offset_rad) {
-  return feedback.error == 1 &&
-         feedback.position_rad >=
-             GRIPPER_OPEN_HARD_RAD + branch_offset_rad - 0.10F &&
-         feedback.position_rad <=
-             GRIPPER_CLOSED_HARD_RAD + branch_offset_rad + 0.10F &&
-          fabsf(feedback.velocity_rad_s) <= GRIPPER_MAX_FEEDBACK_SPEED_RAD_S &&
-         feedback.mos_temperature_c < SAFE_MAX_TEMPERATURE_C &&
-         feedback.rotor_temperature_c < SAFE_MAX_TEMPERATURE_C;
+  return gripper_feedback_abort_reason(feedback, branch_offset_rad) ==
+         GRIPPER_ABORT_NONE;
 }
 
 // Persistent teleoperation session. Both OPEN and CLOSE/CONTACT are active
 // low-gain hold states. Opposite commands transition directly while enabled;
 // only STOP, watchdog loss, feedback fault, or a safety limit disables.
-static void run_gripper_active_session(uint16_t motor_id,
-                                       uint8_t initial_event,
-                                       MotorFeedback feedback,
-                                       float initial_hold_target_rad,
-                                       float branch_offset_rad,
-                                       bool initial_contact) {
-  uint8_t current_event = initial_event;
-  float hold_target_rad = initial_hold_target_rad;
-  bool contact_state = initial_contact;
-  bool healthy = true;
-  bool stop_requested = false;
-  uint32_t last_heartbeat_ms = millis();
-
-  while (healthy && !stop_requested) {
-    const uint32_t hold_settle_started_ms = millis();
-    const twai_message_t hold_command = mit_frame(
-        motor_id, hold_target_rad, GRIPPER_CONTACT_HOLD_KP,
-        GRIPPER_CONTACT_HOLD_KD);
-    if (!transmit_and_receive_feedback(hold_command, motor_id, feedback,
-                                       "active_session_hold_start") ||
-        !gripper_feedback_ok(feedback, branch_offset_rad)) {
-      healthy = false;
-      break;
-    }
-    bool hold_settling = fabsf(feedback.velocity_rad_s) > 1.0F;
-
-    // result=4 is object contact; result=5 is an endpoint hold. flags bit1
-    // means that the motor remains enabled under heartbeat supervision.
-    send_gateway_event(current_event, contact_state ? 0x04 : 0x05, 0x00,
-                       0x02, feedback.position_rad, hold_target_rad);
-
-    bool transition_requested = false;
-    uint8_t next_event = current_event;
-    while (healthy && !stop_requested && !transition_requested) {
-      const HoldRequest request = read_hold_request();
-      if (request == HoldRequest::STOP) {
-        stop_requested = true;
-        break;
-      }
-      if (request == HoldRequest::HEARTBEAT) {
-        last_heartbeat_ms = millis();
-      } else if (request == HoldRequest::OPEN && current_event != 0x10) {
-        next_event = 0x10;
-        transition_requested = true;
-        break;
-      } else if (request == HoldRequest::CLOSE && current_event != 0x11) {
-        next_event = 0x11;
-        transition_requested = true;
-        break;
-      }
-      if (millis() - last_heartbeat_ms > GRIPPER_HOLD_HEARTBEAT_TIMEOUT_MS) {
-        Serial.println("GRIPPER_SESSION_ABORT reason=heartbeat_timeout");
-        healthy = false;
-        break;
-      }
-      MotorFeedback live{};
-      if (!transmit_and_receive_feedback(hold_command, motor_id, live,
-                                         "active_session_hold") ||
-          !gripper_feedback_ok(live, branch_offset_rad)) {
-        Serial.println("GRIPPER_SESSION_ABORT reason=hold_feedback_limit");
-        healthy = false;
-        break;
-      }
-      const float hold_speed = fabsf(live.velocity_rad_s);
-      if (hold_settling) {
-        if (hold_speed <= 1.0F) {
-          hold_settling = false;
-        } else if (millis() - hold_settle_started_ms >
-                   GRIPPER_HOLD_SETTLE_TIMEOUT_MS) {
-          Serial.println("GRIPPER_SESSION_ABORT reason=hold_settle_timeout");
-          healthy = false;
-          break;
-        }
-      } else if (hold_speed > 1.0F) {
-        // Once stable, a new unexplained high-speed excursion is not a normal
-        // transition and remains a fail-safe condition.
-        Serial.println("GRIPPER_SESSION_ABORT reason=hold_speed_excursion");
-        healthy = false;
-        break;
-      }
-      feedback = live;
-      delay(GRIPPER_HOLD_PERIOD_MS);
-    }
-    if (!healthy || stop_requested || !transition_requested) break;
-
-    // Remove preload at the actual pose, then move directly to the opposite
-    // state without disabling the motor.
-    const twai_message_t unload_command = mit_frame(
-        motor_id, feedback.position_rad, GRIPPER_CONTACT_HOLD_KP,
-        GRIPPER_CONTACT_HOLD_KD);
-    if (!transmit_and_receive_feedback(unload_command, motor_id, feedback,
-                                       "active_session_unload")) {
-      healthy = false;
-      break;
-    }
-    delay(2 * GRIPPER_HOLD_PERIOD_MS);
-
-    const float move_start_rad = feedback.position_rad;
-    const float move_target_rad =
-        (next_event == 0x10 ? GRIPPER_OPEN_TARGET_RAD
-                            : GRIPPER_CLOSE_TARGET_RAD) +
-        branch_offset_rad;
-    const float delta = move_target_rad - move_start_rad;
-    uint16_t steps =
-        static_cast<uint16_t>(ceilf(fabsf(delta) / GRIPPER_MOVE_STEP_RAD));
-    if (steps < 1) steps = 1;
-    if (steps > 300) steps = 300;
-    uint8_t stall_samples = 0;
-    float previous_position = feedback.position_rad;
-    bool contact_detected = false;
-
-    for (uint16_t step = 1; step <= steps && healthy && !stop_requested;
-         ++step) {
-      const HoldRequest request = read_hold_request();
-      if (request == HoldRequest::STOP) {
-        stop_requested = true;
-        break;
-      }
-      if (request == HoldRequest::HEARTBEAT) {
-        last_heartbeat_ms = millis();
-      }
-      if (millis() - last_heartbeat_ms > GRIPPER_HOLD_HEARTBEAT_TIMEOUT_MS) {
-        Serial.println("GRIPPER_SESSION_ABORT reason=transition_heartbeat");
-        healthy = false;
-        break;
-      }
-      const float command_position =
-          move_start_rad + delta * static_cast<float>(step) /
-                               static_cast<float>(steps);
-      const float kp = next_event == 0x11 ? 6.0F : GRIPPER_MOVE_KP;
-      const twai_message_t command =
-          mit_frame(motor_id, command_position, kp, GRIPPER_MOVE_KD);
-      MotorFeedback live{};
-      if (!transmit_and_receive_feedback(command, motor_id, live,
-                                         "active_session_transition") ||
-          !gripper_feedback_ok(live, branch_offset_rad)) {
-        healthy = false;
-        break;
-      }
-      if (next_event == 0x11) {
-        const float tracking_error = command_position - live.position_rad;
-        const float progress = live.position_rad - previous_position;
-        if (tracking_error >= 0.16F &&
-            fabsf(live.velocity_rad_s) <= 0.50F && progress <= 0.02F) {
-          ++stall_samples;
-        } else {
-          stall_samples = 0;
-        }
-        if (stall_samples >= 2) {
-          contact_detected = true;
-          feedback = live;
-          break;
-        }
-      }
-      previous_position = live.position_rad;
-      feedback = live;
-      delay(GRIPPER_MOVE_DELAY_MS);
-    }
-    if (!healthy || stop_requested) break;
-
-    if (contact_detected) {
-      hold_target_rad = fminf(
-          move_target_rad,
-          feedback.position_rad + GRIPPER_CONTACT_PRELOAD_RAD);
-      contact_state = true;
-    } else {
-      // Let the low-gain state controller finish the last small tracking gap.
-      hold_target_rad = move_target_rad;
-      contact_state = false;
-    }
-    current_event = next_event;
+// Drain all available requests (bounded work per pass), not just one packet.
+// The parser resynchronizes after a damaged byte and STOP cannot be overwritten.
+static void service_gripper_inbox(GripperInbox &inbox) {
+  for (unsigned i = 0; i < 128 && RS485.available(); ++i) {
+    inbox.feed(static_cast<uint8_t>(RS485.read()), millis());
   }
-
-  send_disable(motor_id, "active_session_disable_finally");
-  delay(50);
-  MotorFeedback final_status{};
-  const bool final_feedback = transmit_and_receive_feedback(
-      status_frame(motor_id), motor_id, final_status,
-      "active_session_final_status");
-  const bool safely_disabled = final_feedback && final_status.error == 0;
-  const bool clean_stop = stop_requested && healthy && safely_disabled;
-  send_gateway_event(0x12, clean_stop ? 0x01 : 0x02, final_status.error,
-                     safely_disabled ? 0x01 : 0x00,
-                     final_feedback ? final_status.position_rad : 999.0F,
-                     hold_target_rad);
 }
 
-static void run_gripper_contact_hold(uint16_t motor_id, uint8_t event,
-                                     float contact_position_rad,
-                                     float close_target_rad,
-                                     float branch_offset_rad) {
-  const float direction = close_target_rad >= contact_position_rad ? 1.0F : -1.0F;
-  float hold_target_rad =
-      contact_position_rad + direction * GRIPPER_CONTACT_PRELOAD_RAD;
-  if (direction > 0.0F) {
-    hold_target_rad = fminf(hold_target_rad, close_target_rad);
-  } else {
-    hold_target_rad = fmaxf(hold_target_rad, close_target_rad);
+static bool gripper_cancelled(GripperInbox &inbox, uint8_t &abort_reason) {
+  service_gripper_inbox(inbox);
+  if (inbox.stopped) return true;
+  if (inbox.expired(millis(), GRIPPER_HOLD_HEARTBEAT_TIMEOUT_MS)) {
+    abort_reason = GRIPPER_ABORT_HEARTBEAT;
+    return true;
   }
+  return false;
+}
 
-  MotorFeedback feedback{};
-  const twai_message_t neutral =
-      zero_torque_mit_frame(motor_id, contact_position_rad);
-  const bool preloaded = transmit_and_receive_feedback(
-      neutral, motor_id, feedback, "contact_hold_preload");
-  const bool enabled = preloaded && transmit_and_receive_feedback(
-      control_command_frame(motor_id, 0xFC), motor_id, feedback,
-      "contact_hold_enable");
-  const twai_message_t hold_command = mit_frame(
-      motor_id, hold_target_rad, GRIPPER_CONTACT_HOLD_KP,
-      GRIPPER_CONTACT_HOLD_KD);
-  const bool first_hold = enabled && feedback.error == 1 &&
-      transmit_and_receive_feedback(hold_command, motor_id, feedback,
-                                    "contact_hold_start");
-  if (!first_hold || !gripper_feedback_ok(feedback, branch_offset_rad) ||
-      fabsf(feedback.velocity_rad_s) > 1.0F) {
-    send_disable(motor_id, "contact_hold_start_failure_disable");
-    send_gateway_event(event, 0x02, feedback.error, 0,
-                       feedback.position_rad, hold_target_rad);
-    return;
-  }
-
-  run_gripper_active_session(motor_id, event, feedback, hold_target_rad,
-                             branch_offset_rad, true);
-  return;
-
-  // flags bit1 means actively holding. A heartbeat watchdog guarantees that
-  // loss of the host/controller connection releases the object within 750 ms.
-  send_gateway_event(event, 0x04, 0x00, 0x02, feedback.position_rad,
-                     hold_target_rad);
-  Serial.printf("GRIPPER_HOLD_ACTIVE contact_rad=%.6f target_rad=%.6f "
-                "kp=%.2f watchdog_ms=%lu\n",
-                contact_position_rad, hold_target_rad,
-                GRIPPER_CONTACT_HOLD_KP,
-                static_cast<unsigned long>(GRIPPER_HOLD_HEARTBEAT_TIMEOUT_MS));
-
-  bool stop_requested = false;
-  bool release_requested = false;
-  bool hold_healthy = true;
-  uint32_t last_heartbeat_ms = millis();
-  while (hold_healthy && !stop_requested) {
-    const HoldRequest request = read_hold_request();
-    if (request == HoldRequest::STOP) {
-      stop_requested = true;
-      break;
+// During CAN retries continue servicing STOP/heartbeat. Never advance a
+// setpoint on missing feedback; stop retransmitting an old target on reversal.
+static bool session_exchange(const twai_message_t &frame, uint16_t motor_id,
+                             MotorFeedback &feedback, GripperInbox &inbox,
+                             uint8_t &abort_reason, const char *phase,
+                             uint8_t expected_goal = 0,
+                             bool *superseded = nullptr) {
+  const uint32_t started_ms = millis();
+  bool missing_feedback = false;
+  bool read_fresh_status = false;
+  for (unsigned attempt = 0; attempt < 3; ++attempt) {
+    if (gripper_cancelled(inbox, abort_reason)) return false;
+    if (expected_goal && inbox.goal != expected_goal && superseded) {
+      if (!missing_feedback) {
+        *superseded = true;
+        return false;
+      }
+      // A reply was lost while the operator changed direction. Cancel the old
+      // setpoint, but use the remaining exchange budget to read fresh status.
+      // Neither a single missed reply nor a new target is a confirmed bus loss.
+      // Once selected, status refresh remains read-only even if the goal flips
+      // back again, until measured position/state are available for replanning.
+      read_fresh_status = true;
     }
-    if (request == HoldRequest::OPEN) {
-      release_requested = true;
-      break;
-    }
-    if (request == HoldRequest::HEARTBEAT) {
-      last_heartbeat_ms = millis();
-    }
-    if (millis() - last_heartbeat_ms > GRIPPER_HOLD_HEARTBEAT_TIMEOUT_MS) {
-      Serial.println("GRIPPER_HOLD_ABORT reason=heartbeat_timeout");
-      hold_healthy = false;
-      break;
-    }
-
-    MotorFeedback live{};
     const bool received = transmit_and_receive_feedback(
-        hold_command, motor_id, live, "contact_hold");
-    if (!received || !gripper_feedback_ok(live, branch_offset_rad) ||
-        fabsf(live.velocity_rad_s) > 1.0F ||
-        fabsf(live.position_rad - contact_position_rad) > 0.20F) {
-      Serial.println("GRIPPER_HOLD_ABORT reason=feedback_limit");
-      hold_healthy = false;
-      break;
+        read_fresh_status ? status_frame(motor_id) : frame,
+        motor_id, feedback, phase);
+    if (gripper_cancelled(inbox, abort_reason)) return false;
+    if (received) {
+      if (read_fresh_status && superseded) *superseded = true;
+      if (missing_feedback) {
+        // Diagnostic only, never a motion/hold acknowledgement. Floats carry
+        // elapsed milliseconds and total attempts, not motor coordinates.
+        send_gateway_event(0x20, 1, 0, 0,
+                           static_cast<float>(millis()-started_ms), attempt+1);
+      }
+      return true;
     }
-    feedback = live;
-    delay(GRIPPER_HOLD_PERIOD_MS);
+    missing_feedback = true;
+    delay(5);
   }
+  send_gateway_event(0x20, 2, 0, 0,
+                     static_cast<float>(millis()-started_ms), 3.0F);
+  abort_reason = GRIPPER_ABORT_CAN_FEEDBACK;
+  return false;
+}
 
-  if (release_requested && hold_healthy) {
-    // Intentional place/release transition: remove preload at the measured
-    // contact pose, then ramp directly open without an intermediate disable.
-    const float open_target_rad =
-        GRIPPER_OPEN_TARGET_RAD + branch_offset_rad;
-    const float release_start_rad = feedback.position_rad;
-    const twai_message_t unload_command = mit_frame(
-        motor_id, release_start_rad, GRIPPER_CONTACT_HOLD_KP,
-        GRIPPER_CONTACT_HOLD_KD);
-    bool release_ok = transmit_and_receive_feedback(
-        unload_command, motor_id, feedback, "contact_release_unload");
-    delay(2 * GRIPPER_HOLD_PERIOD_MS);
-    const float release_delta = open_target_rad - release_start_rad;
-    uint16_t release_steps = static_cast<uint16_t>(
-        ceilf(fabsf(release_delta) / GRIPPER_MOVE_STEP_RAD));
-    if (release_steps < 1) release_steps = 1;
-    if (release_steps > 300) release_steps = 300;
-    for (uint16_t step = 1; step <= release_steps && release_ok; ++step) {
-      const HoldRequest request = read_hold_request();
-      if (request == HoldRequest::STOP) {
-        stop_requested = true;
-        release_ok = false;
-        break;
-      }
-      if (request == HoldRequest::HEARTBEAT) {
-        last_heartbeat_ms = millis();
-      }
-      if (millis() - last_heartbeat_ms > GRIPPER_HOLD_HEARTBEAT_TIMEOUT_MS) {
-        Serial.println("GRIPPER_RELEASE_ABORT reason=heartbeat_timeout");
-        release_ok = false;
-        break;
-      }
-      const float command_position =
-          release_start_rad + release_delta * static_cast<float>(step) /
-                                  static_cast<float>(release_steps);
-      const twai_message_t release_command = mit_frame(
-          motor_id, command_position, GRIPPER_MOVE_KP, GRIPPER_MOVE_KD);
-      MotorFeedback live{};
-      const bool received = transmit_and_receive_feedback(
-          release_command, motor_id, live, "contact_release_open");
-      if (!received || !gripper_feedback_ok(live, branch_offset_rad)) {
-        Serial.println("GRIPPER_RELEASE_ABORT reason=feedback_limit");
-        release_ok = false;
-        break;
-      }
-      feedback = live;
-      delay(GRIPPER_MOVE_DELAY_MS);
-    }
-
-    send_disable(motor_id, "contact_release_disable_finally");
-    delay(50);
-    MotorFeedback final_status{};
-    const bool final_feedback = transmit_and_receive_feedback(
-        status_frame(motor_id), motor_id, final_status,
-        "contact_release_final_status");
-    const bool safely_disabled = final_feedback && final_status.error == 0;
-    if (stop_requested) {
-      send_gateway_event(0x12, safely_disabled ? 0x01 : 0x02,
-                         final_status.error, safely_disabled ? 0x01 : 0x00,
-                         final_feedback ? final_status.position_rad : 999.0F,
-                         open_target_rad);
-      return;
-    }
-    const bool open_reached =
-        final_feedback &&
-        fabsf(final_status.position_rad - open_target_rad) <= 0.10F;
-    const bool passed = release_ok && safely_disabled && open_reached;
-    send_gateway_event(0x10, passed ? 0x01 : 0x02, final_status.error,
-                       safely_disabled ? 0x01 : 0x00,
-                       final_feedback ? final_status.position_rad : 999.0F,
-                       open_target_rad);
-    return;
-  }
-
-  send_disable(motor_id, "contact_hold_disable_finally");
+static void finish_gripper_session(uint16_t motor_id, GripperInbox &inbox,
+                                   uint8_t abort_reason, float target) {
+  send_disable(motor_id, "session_disable_finally");
   delay(50);
   MotorFeedback final_status{};
-  const bool final_feedback = transmit_and_receive_feedback(
-      status_frame(motor_id), motor_id, final_status,
-      "contact_hold_final_status");
-  const bool safely_disabled = final_feedback && final_status.error == 0;
-  const bool clean_stop = stop_requested && hold_healthy && safely_disabled;
-  send_gateway_event(0x12, clean_stop ? 0x01 : 0x02, final_status.error,
-                     safely_disabled ? 0x01 : 0x00,
-                     final_feedback ? final_status.position_rad : 999.0F,
-                     hold_target_rad);
+  const bool received = transmit_and_receive_feedback_guarded(
+      status_frame(motor_id), motor_id, final_status, "session_final_status");
+  const bool disabled = received && final_status.error == 0;
+  const bool clean = inbox.stopped && abort_reason == GRIPPER_ABORT_NONE &&
+                     disabled;
+  if (!clean && abort_reason == GRIPPER_ABORT_NONE) {
+    abort_reason = received ? GRIPPER_ABORT_MOTOR_STATE
+                            : GRIPPER_ABORT_CAN_FEEDBACK;
+  }
+  Serial.printf("SESSION_END reason=%u heartbeat_age_ms=%lu heartbeats=%lu "
+                "invalid_windows=%lu stop=%u\n", abort_reason,
+                static_cast<unsigned long>(millis()-inbox.last_alive_ms),
+                static_cast<unsigned long>(inbox.heartbeat_count),
+                static_cast<unsigned long>(inbox.invalid_windows),
+                inbox.stopped);
+  send_gateway_event(
+      0x12, clean ? 0x01 : 0x02, final_status.error,
+      (disabled ? 0x01 : 0x00) | (clean ? 0 : (abort_reason << 4)),
+      received ? final_status.position_rad : 999.0F, target);
+}
+
+static void run_gripper_active_session(uint16_t motor_id,
+                                      MotorFeedback feedback,
+                                      float branch_offset_rad,
+                                      GripperInbox &inbox) {
+  GripperMotion motion(
+      inbox.goal, feedback.position_rad,
+      GRIPPER_OPEN_TARGET_RAD+branch_offset_rad,
+      GRIPPER_CLOSE_TARGET_RAD+branch_offset_rad, GRIPPER_MOVE_STEP_RAD);
+  uint8_t abort_reason = GRIPPER_ABORT_NONE;
+  uint32_t move_start_ms = millis();
+  int announced_phase = -1;
+  while (true) {
+    if (gripper_cancelled(inbox, abort_reason)) break;
+    abort_reason = gripper_feedback_abort_reason(feedback, branch_offset_rad);
+    if (abort_reason != GRIPPER_ABORT_NONE) break;
+    if (inbox.goal != motion.goal) {
+      motion.reverse(inbox.goal, feedback.position_rad);
+      move_start_ms = millis();
+      announced_phase = -1;
+    }
+    if (!motion.holding() &&
+        millis()-move_start_ms > GRIPPER_MOVE_TIMEOUT_MS) {
+      abort_reason = 7;  // bounded move/settle timeout, never a successful grip
+      break;
+    }
+    const float target = motion.next(feedback.position_rad);
+    const auto command_phase = motion.phase;
+    const float kp = motion.holding() ? GRIPPER_CONTACT_HOLD_KP :
+                     (motion.goal == 0x11 ? 6.0F : GRIPPER_MOVE_KP);
+    MotorFeedback live{};
+    bool superseded = false;
+    if (!session_exchange(
+            mit_frame(motor_id, target, kp, GRIPPER_MOVE_KD),
+            motor_id, live, inbox, abort_reason, "gripper_session",
+            motion.goal, &superseded)) {
+      if (superseded) continue;
+      break;
+    }
+    abort_reason = gripper_feedback_abort_reason(live, branch_offset_rad);
+    if (abort_reason != GRIPPER_ABORT_NONE) break;
+    feedback = live;
+    if (superseded) {
+      // A recovered status is a measurement, not acknowledgement that the
+      // old setpoint completed. Replan even if the trigger flipped back while
+      // reading status; keep the deadline when the final goal is unchanged.
+      if (inbox.goal != motion.goal) move_start_ms = millis();
+      motion.reverse(inbox.goal, feedback.position_rad);
+      announced_phase = -1;
+      continue;
+    }
+    if (inbox.goal != motion.goal) continue;
+    motion.observe(live.position_rad, live.velocity_rad_s);
+    // Publish only after the selected low-gain hold command has been sent and
+    // acknowledged, not when a ramp ends or before contact force is reduced.
+    if (motion.holding() && motion.phase == command_phase &&
+        announced_phase != static_cast<int>(motion.phase)) {
+      send_gateway_event(motion.goal,
+                         motion.phase == GripperMotion::CONTACT ? 4 : 5,
+                         0, 0x02, live.position_rad, motion.command);
+      announced_phase = static_cast<int>(motion.phase);
+    }
+    delay(motion.holding() ? GRIPPER_HOLD_PERIOD_MS : GRIPPER_MOVE_DELAY_MS);
+  }
+  finish_gripper_session(motor_id, inbox, abort_reason, motion.command);
 }
 
 static void run_gripper_move(uint16_t motor_id, float target_rad,
@@ -1096,184 +870,43 @@ static void run_gripper_move(uint16_t motor_id, float target_rad,
     send_gateway_event(event, 0x02, 0xFF, 0, 0.0F, target_rad);
     return;
   }
-
+  GripperInbox inbox(event, millis());
   MotorFeedback initial{};
-  const bool initial_feedback = transmit_and_receive_feedback(
+  const bool received = transmit_and_receive_feedback(
       status_frame(motor_id), motor_id, initial, "gripper_preflight", 500);
   float branch_offset_rad = 0.0F;
-  const bool branch_valid =
-      initial_feedback &&
+  const bool branch_valid = received &&
       select_gripper_branch(initial.position_rad, branch_offset_rad);
-  if (branch_valid) {
-    target_rad += branch_offset_rad;
-    Serial.printf("GRIPPER_BRANCH initial_rad=%.6f offset_rad=%.6f "
-                  "shifted_target_rad=%.6f\n",
-                  initial.position_rad, branch_offset_rad, target_rad);
+  if (branch_valid) target_rad += branch_offset_rad;
+  uint8_t abort_reason = GRIPPER_ABORT_NONE;
+  if (gripper_cancelled(inbox, abort_reason)) {
+    finish_gripper_session(motor_id, inbox, abort_reason, target_rad);
+    return;
   }
-  if (!initial_feedback || !branch_valid ||
-      initial.error != 0 ||
+  if (!received || !branch_valid || initial.error != 0 ||
       fabsf(initial.velocity_rad_s) > SAFE_MAX_INITIAL_SPEED_RAD_S ||
       initial.mos_temperature_c >= SAFE_MAX_TEMPERATURE_C ||
       initial.rotor_temperature_c >= SAFE_MAX_TEMPERATURE_C) {
-    Serial.println("GRIPPER_RESULT REJECT reason=preflight");
-    send_disable(motor_id, "gripper_preflight_disable");
-    send_gateway_event(event, 0x03, initial.error, 0, initial.position_rad,
-                       target_rad);
-    return;
+    send_gateway_event(event, 0x03, initial.error, 0,
+                       received ? initial.position_rad : 999.0F, target_rad);
+    return;  // preflight has not enabled or sent a position command
   }
-
   MotorFeedback feedback{};
-  const twai_message_t neutral =
-      zero_torque_mit_frame(motor_id, initial.position_rad);
-  if (!transmit_and_receive_feedback(neutral, motor_id, feedback,
-                                     "gripper_preload") ||
-      !transmit_and_receive_feedback(control_command_frame(motor_id, 0xFC),
-                                     motor_id, feedback, "gripper_enable") ||
-      feedback.error != 1) {
-    send_disable(motor_id, "gripper_enable_failure_disable");
-    send_gateway_event(event, 0x02, feedback.error, 0, initial.position_rad,
-                       target_rad);
+  if (!session_exchange(
+          zero_torque_mit_frame(motor_id, initial.position_rad),
+          motor_id, feedback, inbox, abort_reason, "gripper_preload") ||
+      !session_exchange(control_command_frame(motor_id, 0xFC),
+                        motor_id, feedback, inbox, abort_reason,
+                        "gripper_enable")) {
+    finish_gripper_session(motor_id, inbox, abort_reason, target_rad);
     return;
   }
-
-  const float delta = target_rad - initial.position_rad;
-  uint16_t steps =
-      static_cast<uint16_t>(ceilf(fabsf(delta) / GRIPPER_MOVE_STEP_RAD));
-  if (steps < 1) steps = 1;
-  if (steps > 300) steps = 300;
-  bool active_ok = true;
-  bool stop_requested = false;
-  MotorFeedback live = feedback;
-  const uint32_t move_start = millis();
-  for (uint16_t step = 1; step <= steps; ++step) {
-    if (emergency_stop_requested()) {
-      stop_requested = true;
-      active_ok = false;
-      break;
-    }
-    if (millis() - move_start > GRIPPER_MOVE_TIMEOUT_MS) {
-      Serial.println("GRIPPER_ABORT reason=timeout");
-      active_ok = false;
-      break;
-    }
-    const float command_position =
-        initial.position_rad + delta * static_cast<float>(step) /
-                                   static_cast<float>(steps);
-    const twai_message_t command = mit_frame(
-        motor_id, command_position, GRIPPER_MOVE_KP, GRIPPER_MOVE_KD);
-    bool received = transmit_and_receive_feedback(command, motor_id, live,
-                                                  "gripper_ramp");
-    if (!received) {
-      // Long moves contain hundreds of one-shot frames. Retry the exact same
-      // bounded setpoint once; never advance the target without feedback.
-      delay(5);
-      received = transmit_and_receive_feedback(command, motor_id, live,
-                                               "gripper_ramp_retry");
-    }
-    if (!received || !gripper_feedback_ok(live, branch_offset_rad)) {
-      Serial.println("GRIPPER_ABORT reason=feedback_limit");
-      active_ok = false;
-      break;
-    }
-    delay(GRIPPER_MOVE_DELAY_MS);
-  }
-
-  for (uint8_t hold = 0; hold < GRIPPER_HOLD_MAX_STEPS && active_ok; ++hold) {
-    if (emergency_stop_requested()) {
-      stop_requested = true;
-      active_ok = false;
-      break;
-    }
-    const twai_message_t command =
-        mit_frame(motor_id, target_rad, GRIPPER_MOVE_KP, GRIPPER_MOVE_KD);
-    bool received = transmit_and_receive_feedback(command, motor_id, live,
-                                                  "gripper_hold");
-    if (!received) {
-      delay(5);
-      received = transmit_and_receive_feedback(command, motor_id, live,
-                                               "gripper_hold_retry");
-    }
-    if (!received || !gripper_feedback_ok(live, branch_offset_rad)) {
-      active_ok = false;
-      break;
-    }
-    if (hold + 1 >= GRIPPER_HOLD_MIN_STEPS &&
-        fabsf(live.position_rad - target_rad) <= 0.06F &&
-        fabsf(live.velocity_rad_s) <= SAFE_MAX_INITIAL_SPEED_RAD_S) {
-      break;
-    }
-    delay(GRIPPER_MOVE_DELAY_MS);
-  }
-
-  const bool active_target_reached =
-      active_ok && !stop_requested &&
-      fabsf(live.position_rad - target_rad) <= 0.12F;
-  if (active_target_reached) {
-    run_gripper_active_session(motor_id, event, live, target_rad,
-                               branch_offset_rad, false);
+  abort_reason = gripper_feedback_abort_reason(feedback, branch_offset_rad);
+  if (abort_reason != GRIPPER_ABORT_NONE) {
+    finish_gripper_session(motor_id, inbox, abort_reason, target_rad);
     return;
   }
-
-  const bool disable_feedback =
-      send_disable(motor_id, "gripper_disable_finally");
-  // Let the linkage settle after releasing contact force. Reading after only
-  // 20 ms captured spring-back velocity and misclassified a valid grasp.
-  delay(150);
-  MotorFeedback final_status{};
-  const bool final_feedback = transmit_and_receive_feedback(
-      status_frame(motor_id), motor_id, final_status, "gripper_final_status");
-  const bool safely_disabled = final_feedback && final_status.error == 0;
-  const bool target_reached =
-      final_feedback && fabsf(final_status.position_rad - target_rad) <= 0.08F;
-  // A real object normally prevents CLOSE from reaching the calibrated empty-
-  // jaw endpoint. That is a successful grasp contact when the move made clear
-  // progress toward CLOSE and the settled, disabled state is fault-free and
-  // within the calibrated branch. Never use this classification for OPEN.
-  const float commanded_delta = target_rad - initial.position_rad;
-  const float actual_delta =
-      final_feedback ? final_status.position_rad - initial.position_rad : 0.0F;
-  const bool close_action = event == 0x11;
-  const bool progressed_toward_target =
-      fabsf(actual_delta) >= 0.05F && actual_delta * commanded_delta > 0.0F;
-  const bool final_stationary =
-      final_feedback &&
-      fabsf(final_status.velocity_rad_s) <= SAFE_MAX_INITIAL_SPEED_RAD_S;
-  const bool final_position_safe =
-      final_feedback &&
-      final_status.position_rad >=
-          GRIPPER_OPEN_HARD_RAD + branch_offset_rad - 0.10F &&
-      final_status.position_rad <=
-          GRIPPER_CLOSED_HARD_RAD + branch_offset_rad + 0.10F;
-  const bool final_temperature_safe =
-      final_feedback &&
-      final_status.mos_temperature_c < SAFE_MAX_TEMPERATURE_C &&
-      final_status.rotor_temperature_c < SAFE_MAX_TEMPERATURE_C;
-  const bool contact_detected =
-      close_action && safely_disabled && final_stationary &&
-      final_position_safe && final_temperature_safe &&
-      progressed_toward_target && !target_reached && !stop_requested;
-  const bool passed = active_ok && disable_feedback && safely_disabled &&
-                      target_reached && !stop_requested;
-  const uint8_t result_code = passed ? 0x01 : (contact_detected ? 0x04 : 0x02);
-  if (contact_detected) {
-    run_gripper_contact_hold(motor_id, event, final_status.position_rad,
-                             target_rad, branch_offset_rad);
-    return;
-  }
-  Serial.printf(
-      "GRIPPER_RESULT action=%s passed=%u contact=%u final_rad=%.6f "
-      "target_rad=%.6f progress_rad=%.6f verified_disabled=%u stop=%u\n",
-      name, passed, contact_detected, final_status.position_rad, target_rad,
-      actual_delta, safely_disabled, stop_requested);
-  send_gateway_event(event, result_code, final_status.error,
-                     safely_disabled ? 0x01 : 0x00,
-                     final_feedback ? final_status.position_rad : 999.0F,
-                     target_rad);
-  if (stop_requested) {
-    send_gateway_event(0x12, safely_disabled ? 0x01 : 0x02,
-                       final_status.error, safely_disabled ? 0x01 : 0x00,
-                       final_status.position_rad, final_status.position_rad);
-  }
+  run_gripper_active_session(motor_id, feedback, branch_offset_rad, inbox);
 }
 
 static void send_read_parameter(uint16_t motor_id, uint8_t rid) {
@@ -1439,7 +1072,7 @@ static void process_request() {
       return;
     }
     Serial.println(
-        "FIRMWARE_ID guarded_gateway_build_3.7 persistent_dual_hold_settle");
+        "FIRMWARE_ID guarded_gateway_build_4.6 reversal_feedback_recovery");
     send_identity_response();
   } else if (safe_enable_request) {
     if (request_buffer[6] != SAFE_ENABLE_GUARD) {
@@ -1524,7 +1157,7 @@ void setup() {
 #ifdef GRIPPER_LEGACY_PROFILE
   Serial.println("T-CAN485 DM4310 guarded gateway build 1.1 rollback");
 #else
-  Serial.println("T-CAN485 DM4310 guarded gateway build 3.7 dual-hold-settle");
+  Serial.println("T-CAN485 DM4310 guarded gateway build 4.6 reversal-feedback-recovery");
 #endif
   initialize_can(1000);
   initialize_rs485();
@@ -1541,7 +1174,7 @@ void setup() {
 #endif
   Serial.println("RUNTIME: RS485/TCP60000 only; USB is optional diagnostics");
   Serial.println("ACTIVE_DENY: no position delta, clear-fault, zeroing, parameter write");
-  Serial.println("TX_POLICY: single-shot, no automatic retry");
+  Serial.println("TX_POLICY: CAN single-shot; active session <=3 guarded software attempts");
   Serial.println("BITRATE_SCAN: 1000,500,250,200,125 kbit/s; stop on ACK");
 }
 
@@ -1550,4 +1183,4 @@ void loop() {
   poll_can_alerts();
   poll_can();
   delay(1);
-}
+}\n
