@@ -26,7 +26,7 @@ This repository contains archived scripts that can enable or move the robot or m
 
 Never connect RS485 A/B directly to CAN_H/CAN_L. The included B601-DM adapter files are reference geometry for a different gripper model and are not validated as a DM4310 mount.
 
-The `config/` folder includes machine-specific calibration values. Review them before use; do not assume a stored calibration is valid after hardware, tool, or mounting changes.
+The `config/` folder and gateway source include machine-specific calibration and limit values. In this update, the closed-position hard ceiling and feedback-speed abort threshold changed; these values are for the tested prototype and are not portable defaults. Review `GRIPPER_CLOSED_HARD_RAD` and `GRIPPER_MAX_FEEDBACK_SPEED_RAD_S` in `firmware/tcan485_dm4310_read_probe/src/main.cpp` and remeasure/review before using a different gripper, motor, or mounting. Do not treat these software limits as safety-rated limits.
 
 ## Verification status
 
