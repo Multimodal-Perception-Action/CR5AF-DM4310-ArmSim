@@ -1,0 +1,34 @@
+<mujoco model="uarm_config2_step_reference">
+  <compiler angle="radian"
+            meshdir="../../uarm_cr10a_teleop_sim/LeRobot-Anything-U-Arm-main/mechanical/Feetech_servo/Config2_STL"/>
+  <visual><headlight ambient="0.45 0.45 0.45" diffuse="0.8 0.8 0.8"/></visual>
+  <asset>
+    <mesh name="base" file="config2 - base-1.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="link1" file="config2 - link1-1.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="link2" file="config2 - link2-1.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="link3" file="config2 - link3-1.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="link4" file="config2 - link4-1.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="link5" file="config2 - link5-1.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="link6" file="config2 - link6-1.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="sitter1" file="config2 - sitter-1.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="sitter2" file="config2 - sitter-2.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="sitter_mid" file="config2 - sitter_mid-1.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="trigger" file="config2 - trigger_short-1.STL" scale="0.001 0.001 0.001"/>
+  </asset>
+  <worldbody>
+    <light pos="0 -1 1" dir="0 0 -1"/>
+    <body name="step_assembly" pos="-0.056 -0.158 0">
+      <geom type="mesh" mesh="base" rgba="0.12 0.45 0.95 1"/>
+      <geom type="mesh" mesh="link1" rgba="0.12 0.45 0.95 1"/>
+      <geom type="mesh" mesh="link2" rgba="0.12 0.45 0.95 1"/>
+      <geom type="mesh" mesh="link3" rgba="0.12 0.45 0.95 1"/>
+      <geom type="mesh" mesh="link4" rgba="0.12 0.45 0.95 1"/>
+      <geom type="mesh" mesh="link5" rgba="0.12 0.45 0.95 1"/>
+      <geom type="mesh" mesh="link6" rgba="0.12 0.45 0.95 1"/>
+      <geom type="mesh" mesh="sitter1" rgba="0.18 0.25 0.38 1"/>
+      <geom type="mesh" mesh="sitter2" rgba="0.18 0.25 0.38 1"/>
+      <geom type="mesh" mesh="sitter_mid" rgba="0.18 0.25 0.38 1"/>
+      <geom type="mesh" mesh="trigger" rgba="0.95 0.35 0.10 1"/>
+    </body>
+  </worldbody>
+</mujoco>

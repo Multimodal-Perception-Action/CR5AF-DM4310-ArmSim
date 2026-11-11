@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "purpose": "operator_confirmed_gripper_installation_clearance_pose",
+  "operator_confirmed": true,
+  "measured_at_local": "2026-11-11T18:32:34+08:00",
+  "actual_joint_angles_deg": [
+    -0.405971,
+    83.582069,
+    -139.335709,
+    -0.028670,
+    90.536568,
+    0.015539
+  ],
+  "feedback_state": {
+    "robot_mode": 5,
+    "enable_status": 1,
+    "running_status": 0,
+    "error_status": 0
+  },
+  "stability_window": {
+    "samples": 60,
+    "duration_s": 11.2,
+    "actual_joint_range_deg": [
+      0.0121,
+      0.0,
+      0.0,
+      0.0001,
+      0.0,
+      0.0
+    ]
+  },
+  "uarm_reference_ticks": [117, 473, 3643, 3686, 4045, 352],
+  "uarm_was_stationary_for_pairing": false,
+  "motion_sent_during_capture": false,
+  "evidence_log": "logs/uarm_dobot_preview_20261111_183234.jsonl",
+  "note": "Pose recorded for the operator-confirmed gripper installation clearance. U-Arm ticks are the contemporaneous operator-selected pose; this snapshot is an alignment pair, not a motion test."
+}

@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="1210" viewBox="0 0 1900 1210">
+<rect x="0" y="0" width="1900" height="1210" rx="0" fill="#F8FAFC" stroke="none" stroke-width="0"/>
+<rect x="0" y="0" width="1900" height="134" rx="0" fill="#0B1220" stroke="none" stroke-width="0"/>
+<text x="65" y="61" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="36" font-weight="700" fill="#FFFFFF" text-anchor="start">CR5AF 末端 → XIAO STM32C5 → DM4310 夹爪</text>
+<text x="66" y="103" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="400" fill="#CBD5E1" text-anchor="start">完整工程接线图  ·  以官方指定 M8 线束颜色为准  ·  原理图，不代表实体引脚的几何位置</text>
+<rect x="65" y="195" width="350" height="550" rx="18" fill="#FFFFFF" stroke="#334155" stroke-width="3"/>
+<rect x="65" y="195" width="350" height="66" rx="16" fill="#334155" stroke="none" stroke-width="0"/>
+<text x="88" y="224" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="25" font-weight="700" fill="#fff" text-anchor="start">① Dobot CR5AF</text>
+<text x="88" y="249" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="15" font-weight="400" fill="#fff" text-anchor="start">末端 M8 八芯航插（线束端）</text>
+<rect x="535" y="195" width="280" height="454" rx="18" fill="#FFFFFF" stroke="#0D9488" stroke-width="3"/>
+<rect x="535" y="195" width="280" height="66" rx="16" fill="#0D9488" stroke="none" stroke-width="0"/>
+<text x="558" y="224" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="25" font-weight="700" fill="#fff" text-anchor="start">② SP3485</text>
+<text x="558" y="249" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="15" font-weight="400" fill="#fff" text-anchor="start">微雪 3.3V RS485 模块</text>
+<rect x="1045" y="195" width="345" height="555" rx="18" fill="#FFFFFF" stroke="#2563EB" stroke-width="3"/>
+<rect x="1045" y="195" width="345" height="66" rx="16" fill="#2563EB" stroke="none" stroke-width="0"/>
+<text x="1068" y="224" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="25" font-weight="700" fill="#fff" text-anchor="start">③ XIAO STM32C5</text>
+<text x="1068" y="249" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="15" font-weight="400" fill="#fff" text-anchor="start">3.3V UART + 板载 CAN</text>
+<rect x="1560" y="195" width="280" height="555" rx="18" fill="#FFFFFF" stroke="#7C3AED" stroke-width="3"/>
+<rect x="1560" y="195" width="280" height="66" rx="16" fill="#7C3AED" stroke="none" stroke-width="0"/>
+<text x="1583" y="224" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="25" font-weight="700" fill="#fff" text-anchor="start">④ 达妙 DM4310</text>
+<text x="1583" y="249" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="15" font-weight="400" fill="#fff" text-anchor="start">电机 XT30 2+2 端子功能</text>
+<rect x="535" y="825" width="300" height="220" rx="18" fill="#FFFFFF" stroke="#B45309" stroke-width="3"/>
+<rect x="535" y="825" width="300" height="66" rx="16" fill="#B45309" stroke="none" stroke-width="0"/>
+<text x="558" y="854" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="25" font-weight="700" fill="#fff" text-anchor="start">⑤ DC-DC 降压</text>
+<text x="558" y="879" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="15" font-weight="400" fill="#fff" text-anchor="start">24V 输入 → 稳定 5V 输出</text>
+<rect x="1560" y="825" width="280" height="220" rx="18" fill="#FFFFFF" stroke="#B45309" stroke-width="3"/>
+<rect x="1560" y="825" width="280" height="66" rx="16" fill="#B45309" stroke="none" stroke-width="0"/>
+<text x="1583" y="854" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="25" font-weight="700" fill="#fff" text-anchor="start">⑥ 独立 24V 电源</text>
+<text x="1583" y="879" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="15" font-weight="400" fill="#fff" text-anchor="start">只给电机动力供电</text>
+<circle cx="415" cy="292" r="5" fill="#475569" stroke="#fff" stroke-width="2"/>
+<text x="399" y="300" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#475569" text-anchor="end">Pin 1  白  ·  RS485 A</text>
+<circle cx="415" cy="342" r="5" fill="#9C5C35" stroke="#fff" stroke-width="2"/>
+<text x="399" y="350" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#9C5C35" text-anchor="end">Pin 2  棕  ·  RS485 B</text>
+<circle cx="415" cy="397" r="5" fill="#818B9D" stroke="#fff" stroke-width="2"/>
+<text x="399" y="405" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#818B9D" text-anchor="end">Pin 5  灰  ·  24V+</text>
+<circle cx="415" cy="452" r="5" fill="#DC2626" stroke="#fff" stroke-width="2"/>
+<text x="399" y="460" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#DC2626" text-anchor="end">Pin 8  红  ·  GND</text>
+<text x="87" y="553" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#334155" text-anchor="start">暂不接：</text>
+<text x="87" y="591" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="17" font-weight="400" fill="#64748B" text-anchor="start">Pin 3 绿 / Pin 4 黄（DI）</text>
+<text x="87" y="628" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="17" font-weight="400" fill="#64748B" text-anchor="start">Pin 6 粉 / Pin 7 蓝（DO）</text>
+<text x="87" y="689" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="17" font-weight="500" fill="#9A3412" text-anchor="start">注意：485 A/B 与 AI1/AI2 复用</text>
+<circle cx="535" cy="292" r="5" fill="#334155" stroke="#fff" stroke-width="2"/>
+<text x="551" y="300" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#334155" text-anchor="start">A</text>
+<circle cx="535" cy="342" r="5" fill="#334155" stroke="#fff" stroke-width="2"/>
+<text x="551" y="350" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#334155" text-anchor="start">B</text>
+<circle cx="815" cy="417" r="5" fill="#D97706" stroke="#fff" stroke-width="2"/>
+<text x="799" y="425" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#D97706" text-anchor="end">DI (TTL 输入)</text>
+<circle cx="815" cy="467" r="5" fill="#16A34A" stroke="#fff" stroke-width="2"/>
+<text x="799" y="475" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#16A34A" text-anchor="end">RO (TTL 输出)</text>
+<circle cx="815" cy="517" r="5" fill="#9333EA" stroke="#fff" stroke-width="2"/>
+<text x="799" y="525" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#9333EA" text-anchor="end">RSE (方向)</text>
+<circle cx="815" cy="567" r="5" fill="#F59E0B" stroke="#fff" stroke-width="2"/>
+<text x="799" y="575" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#F59E0B" text-anchor="end">VCC (3.3V)</text>
+<circle cx="815" cy="617" r="5" fill="#64748B" stroke="#fff" stroke-width="2"/>
+<text x="799" y="625" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#64748B" text-anchor="end">GND</text>
+<text x="560" y="392" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="17" font-weight="400" fill="#64748B" text-anchor="start">RS485 差分双线</text>
+<circle cx="1045" cy="417" r="5" fill="#334155" stroke="#fff" stroke-width="2"/>
+<text x="1061" y="425" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#334155" text-anchor="start">D6 / TX</text>
+<circle cx="1045" cy="467" r="5" fill="#334155" stroke="#fff" stroke-width="2"/>
+<text x="1061" y="475" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#334155" text-anchor="start">D7 / RX</text>
+<circle cx="1045" cy="517" r="5" fill="#334155" stroke="#fff" stroke-width="2"/>
+<text x="1061" y="525" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#334155" text-anchor="start">D2 / GPIO</text>
+<circle cx="1045" cy="567" r="5" fill="#334155" stroke="#fff" stroke-width="2"/>
+<text x="1061" y="575" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#334155" text-anchor="start">3V3</text>
+<circle cx="1045" cy="617" r="5" fill="#334155" stroke="#fff" stroke-width="2"/>
+<text x="1061" y="625" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#334155" text-anchor="start">GND</text>
+<circle cx="1390" cy="312" r="5" fill="#16A34A" stroke="#fff" stroke-width="2"/>
+<text x="1374" y="320" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#16A34A" text-anchor="end">CAN_H（背面焊盘）</text>
+<circle cx="1390" cy="362" r="5" fill="#0EA5E9" stroke="#fff" stroke-width="2"/>
+<text x="1374" y="370" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#0EA5E9" text-anchor="end">CAN_L（背面焊盘）</text>
+<circle cx="1390" cy="707" r="5" fill="#64748B" stroke="#fff" stroke-width="2"/>
+<text x="1374" y="715" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#64748B" text-anchor="end">GND / 信号参考</text>
+<circle cx="1220" cy="750" r="6" fill="#B45309" stroke="#fff" stroke-width="2"/>
+<text x="1205" y="724" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#B45309" text-anchor="end">VBUS / 5V</text>
+<text x="1069" y="672" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="16" font-weight="400" fill="#64748B" text-anchor="start">D15/CAN_STB：程序设为正常工作</text>
+<circle cx="1560" cy="312" r="5" fill="#334155" stroke="#fff" stroke-width="2"/>
+<text x="1576" y="320" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#334155" text-anchor="start">H  · CAN_H</text>
+<circle cx="1560" cy="362" r="5" fill="#334155" stroke="#fff" stroke-width="2"/>
+<text x="1576" y="370" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#334155" text-anchor="start">L  · CAN_L</text>
+<circle cx="1560" cy="642" r="5" fill="#334155" stroke="#fff" stroke-width="2"/>
+<text x="1576" y="650" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#334155" text-anchor="start">+   电机 24V+</text>
+<circle cx="1560" cy="692" r="5" fill="#334155" stroke="#fff" stroke-width="2"/>
+<text x="1576" y="700" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#334155" text-anchor="start">−   电机 0V</text>
+<text x="1582" y="450" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="18" font-weight="700" fill="#7C3AED" text-anchor="start">H / L：通信信号</text>
+<text x="1582" y="490" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="18" font-weight="700" fill="#7C3AED" text-anchor="start">+ / −：动力供电</text>
+<text x="1582" y="543" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="18" font-weight="700" fill="#9A3412" text-anchor="start">TX / RX 不接电机</text>
+<circle cx="535" cy="923" r="5" fill="#334155" stroke="#fff" stroke-width="2"/>
+<text x="551" y="931" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#334155" text-anchor="start">VIN+ 24V</text>
+<circle cx="535" cy="976" r="5" fill="#334155" stroke="#fff" stroke-width="2"/>
+<text x="551" y="984" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#334155" text-anchor="start">VIN− 0V</text>
+<circle cx="835" cy="923" r="5" fill="#B45309" stroke="#fff" stroke-width="2"/>
+<text x="819" y="931" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#B45309" text-anchor="end">VOUT+ 5V</text>
+<circle cx="835" cy="976" r="5" fill="#64748B" stroke="#fff" stroke-width="2"/>
+<text x="819" y="984" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#64748B" text-anchor="end">VOUT− GND</text>
+<circle cx="1560" cy="921" r="5" fill="#334155" stroke="#fff" stroke-width="2"/>
+<text x="1576" y="929" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#334155" text-anchor="start">+24V 输出</text>
+<circle cx="1560" cy="976" r="5" fill="#334155" stroke="#fff" stroke-width="2"/>
+<text x="1576" y="984" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#334155" text-anchor="start">0V 输出</text>
+<path d="M415,292 L535,292" stroke="#E2E8F0" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M415,292 L535,292" stroke="#64748B" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M415,342 L535,342" stroke="#9C5C35" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M815,417 L1045,417" stroke="#D97706" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M815,467 L1045,467" stroke="#16A34A" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M815,517 L1045,517" stroke="#9333EA" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M815,567 L1045,567" stroke="#F59E0B" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M815,617 L1045,617" stroke="#64748B" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1390,312 L1560,312" stroke="#16A34A" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1390,362 L1560,362" stroke="#0EA5E9" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M415,397 L462,397 L462,923 L535,923" stroke="#818B9D" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M415,452 L499,452 L499,976 L535,976" stroke="#DC2626" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M835,923 L1220,923 L1220,750" stroke="#B45309" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M835,976 L971,976 L971,617 L1045,617" stroke="#64748B" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M815,617 L971,617" stroke="#64748B" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="971" cy="617" r="7" fill="#64748B" stroke="#fff" stroke-width="2"/>
+<path d="M1560,921 L1520,921 L1520,642 L1560,642" stroke="#DC2626" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1560,976 L1474,976 L1474,692 L1560,692" stroke="#64748B" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1390,707 L1440,707 L1440,976 L1474,976" stroke="#A78BFA" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="9 8"/>
+<circle cx="1474" cy="976" r="6" fill="#64748B" stroke="#fff" stroke-width="2"/>
+<text x="885" y="402" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="15" font-weight="500" fill="#D97706" text-anchor="start">MCU TX → DI</text>
+<text x="885" y="452" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="15" font-weight="500" fill="#16A34A" text-anchor="start">RO → MCU RX</text>
+<text x="900" y="504" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="15" font-weight="500" fill="#9333EA" text-anchor="start">发送高 / 接收低</text>
+<text x="1408" y="295" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="17" font-weight="500" fill="#0F766E" text-anchor="start">CAN 通信双绞线</text>
+<text x="1462" y="841" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="16" font-weight="500" fill="#7C3AED" text-anchor="end">虚线：小电流信号参考地</text>
+<rect x="65" y="815" width="350" height="244" rx="16" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2"/>
+<text x="88" y="855" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="23" font-weight="700" fill="#0F172A" text-anchor="start">接线前核对</text>
+<text x="88" y="896" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="17" font-weight="400" fill="#334155" text-anchor="start">• 按 M8 插针编号确认线色</text>
+<text x="88" y="932" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="17" font-weight="400" fill="#334155" text-anchor="start">• 先空载测量 24V / 5V / 3.3V</text>
+<text x="88" y="968" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="17" font-weight="400" fill="#334155" text-anchor="start">• 确认 CAN 两端各一个 120Ω</text>
+<text x="88" y="1004" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="17" font-weight="400" fill="#334155" text-anchor="start">• 不允许 24V 直接进 XIAO</text>
+<rect x="65" y="1086" width="1775" height="90" rx="12" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2"/>
+<text x="88" y="1122" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="21" font-weight="700" fill="#92400E" text-anchor="start">重要：</text>
+<text x="160" y="1122" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="19" font-weight="500" fill="#92400E" text-anchor="start">非隔离 SP3485 需要共同信号参考；电机大电流必须走独立电源回路，不可经 M8 红线回流。</text>
+<text x="88" y="1155" font-family="Noto Sans CJK SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#92400E" text-anchor="start">USB 调试时应隔离外部 5V，避免双电源反灌；控制板还需编写 Modbus RTU 从站 → 达妙 CAN 的协议转换程序。</text>
+</svg>

@@ -1,0 +1,29 @@
+<mujoco model="cr5_dm4310_gripper">
+  <compiler angle="radian" meshdir="meshes"/>
+  <option gravity="0 0 0"/>
+  <default>
+    <joint damping="0.05"/>
+    <geom contype="0" conaffinity="0" density="500"/>
+  </default>
+  <asset>
+    <mesh name="left_finger_mesh" file="so101_finger_universal.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="right_finger_mesh" file="so101_finger_universal_right.stl" scale="0.001 0.001 0.001"/>
+  </asset>
+  <worldbody>
+    <body name="dm4310_gripper_mount">
+      <geom name="dm4310_motor" type="cylinder" size="0.0215 0.018" pos="0.018 0 0" euler="0 1.57079632679 0" rgba="0.16 0.18 0.22 1"/>
+      <geom name="gripper_mount" type="box" size="0.012 0.025 0.025" pos="0.048 0 0" rgba="0.20 0.55 0.50 1"/>
+      <body name="left_finger" pos="0.055 0.010 0">
+        <joint name="left_slide" type="slide" axis="0 1 0" range="0 0.020" limited="true"/>
+        <geom name="left_finger_visual" type="mesh" mesh="left_finger_mesh" pos="0.0095 0 0" euler="0 0 3.14159265359" rgba="0.96 0.58 0.09 1"/>
+      </body>
+      <body name="right_finger" pos="0.055 -0.010 0">
+        <joint name="right_slide" type="slide" axis="0 1 0" range="-0.020 0" limited="true"/>
+        <geom name="right_finger_visual" type="mesh" mesh="right_finger_mesh" pos="0.0095 0 0" rgba="0.10 0.60 0.62 1"/>
+      </body>
+    </body>
+  </worldbody>
+  <equality>
+    <joint name="finger_symmetry" joint1="left_slide" joint2="right_slide" polycoef="0 -1 0 0 0"/>
+  </equality>
+</mujoco>

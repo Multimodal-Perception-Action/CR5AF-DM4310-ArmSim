@@ -1,41 +1,35 @@
-# CR5AF-DM4310 ArmSim
+# CR5AF + DM4310 Gripper Simulation and Integration
 
-A work-in-progress project for documenting and simulating a Dobot CR5AF with a custom gripper driven by a DM-J4310-2EC motor.
+This repository collects the CR5AF / CC262 communication audits, DM-J4310-2EC V1.2 gateway work, U-Arm teleoperation integration, simulation assets, calibration/configuration data, and custom gripper CAD used in this project.
 
-## Scope
+## Project folders
 
-- Build a mechanically faithful gripper model and integrate it with the CR5AF model.
-- Record repeatable flange, gripper, and motor-to-jaw calibration procedures.
-- Keep offline simulation assets separate from any live hardware interface.
-- Document the PC, CC262 tool-RS485, T-CAN485, and motor-CAN communication path.
+- `src/`: Python status, simulation, integration, and hardware-facing programs.
+- `firmware/`: T-CAN485 ESP32 gateway source; build output is excluded.
+- `simulation/`: generated MuJoCo URDFs, scenes, and mesh assets.
+- `assets/`: custom gripper geometry, wiring diagrams, U-Arm trigger models, and a separately labeled B601-DM adapter reference.
+- `config/`: example and project calibration/configuration JSON files.
+- `docs/`: protocol/API audits, integration notes, calibration and simulation guidance.
+- `evidence/read_only/raw_logs/`: selected status/query logs only.
 
-This initial repository contains documentation and an empty calibration template. It does not contain a live robot or motor command sender.
+## Bench communication path
 
-## Bench-verified communication path
+The verified transport path was initiated by the Windows PC:
 
-The tested byte path was initiated by software on the Windows PC:
+`PC application -> CR5AF TCP 60000 -> CC262 tool RS485 -> T-CAN485 -> Classic CAN -> DM-J4310-2EC V1.2`
 
-PC application -> Ethernet/TCP port 60000 -> CC262 tool-RS485 channel -> T-CAN485 -> Classic CAN -> DM-J4310-2EC
+A read-only status query traversed the gateway. The PC originates the bytes; this result does not mean the robot controller autonomously generates motor commands. See `docs/dm4310_gateway_audit.md` and `docs/rs485_api_audit.md`.
 
-A read-only motor status/parameter query was received through the gateway. This confirms the tested transport path; it does not mean the robot controller autonomously creates the motor command. In this arrangement, the PC application originates the bytes and the controller forwards them to tool RS485.
+## Hardware safety
 
-The DM-J4310-2EC V1.2 bench setup was read back as Classic CAN at 1 Mbit/s. Refer to the exact motor revision and its official manual before using these values with another unit.
+This repository contains archived scripts that can enable or move the robot or motor, clear errors, write tool configuration, operate U-Arm servos, or flash gateway firmware. Importing these files did not execute them. Review `docs/script_safety_index.md` and each program before running anything. The project is not a safety-rated controller and does not provide collision protection.
 
-## Current status
+Never connect RS485 A/B directly to CAN_H/CAN_L. The included B601-DM adapter files are reference geometry for a different gripper model and are not validated as a DM4310 mount.
 
-See TODO.md and docs/verification-status.md. The custom gripper assembly model, measured transforms, public simulation adapter, and full offline regression are not yet delivered here. The CR5AF is modeled separately from the gripper; the ReBot B601-DM model used by other projects is not a substitute for this custom mechanism.
+The `config/` folder includes machine-specific calibration values. Review them before use; do not assume a stored calibration is valid after hardware, tool, or mounting changes.
 
-## Safety and data policy
+## Verification status
 
-- This repository is for simulation and documentation. Do not treat it as a safety-rated controller.
-- Do not connect RS485 A/B directly to CAN_H/CAN_L.
-- No actual controller IPs, serial numbers, raw machine logs, credentials, or per-device calibration values are included in this starter.
-- Keep hardware-specific calibration in local files until its owner explicitly approves publication.
+The selected evidence logs contain read-only feedback and query records. Movement, enable, error-clear, configuration-write, and control-stream logs are not included in this evidence set. No hardware command was sent during this repository import. No tests were run as part of the import.
 
-## References
-
-- Dobot TCP/IP Protocol V4: https://github.com/Dobot-Arm/TCP-IP-Protocol-6AXis-V4
-- Dobot TCP/IP Python SDK V4: https://github.com/Dobot-Arm/TCP-IP-Python-V4
-- Dobot ROS 2 V4: https://github.com/Dobot-Arm/DOBOT_6Axis_ROS2_V4
-- Damiao DM-J4310-2EC: https://github.com/dmBots/DM-J4310-2EC
-- ArmSimLab: https://github.com/Multimodal-Perception-Action/ArmSimLab
+See `docs/verification-status.md`, `docs/tcp_mode_audit.md`, `docs/dm4310_v4_protocol_audit.md`, and `docs/can_direct_connection.md` for evidence-backed status and official references. See `docs/workspace_import_inventory.md` for the import scope.

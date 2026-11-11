@@ -1,0 +1,154 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="uarm_config2_repaired_visual">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="base_link.stl" scale="1 1 1" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="base_link.stl" scale="1 1 1" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="link1">
+    <visual>
+      <geometry>
+        <mesh filename="link1.stl" scale="1 1 1" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="link1.stl" scale="1 1 1" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="link2">
+    <visual>
+      <geometry>
+        <mesh filename="link2.stl" scale="1 1 1" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="link2.stl" scale="1 1 1" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="link3">
+    <visual>
+      <geometry>
+        <mesh filename="link3.stl" scale="1 1 1" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="link3.stl" scale="1 1 1" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="link4">
+    <visual>
+      <geometry>
+        <mesh filename="link4.stl" scale="1 1 1" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="link4.stl" scale="1 1 1" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="link5">
+    <visual>
+      <geometry>
+        <mesh filename="link5.stl" scale="1 1 1" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="link5.stl" scale="1 1 1" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="link6">
+    <visual>
+      <geometry>
+        <mesh filename="link6.stl" scale="1 1 1" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="link6.stl" scale="1 1 1" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint1" type="continuous">
+    <parent link="base_link" />
+    <child link="link1" />
+    <origin xyz="-0.08658114044817233 0.046659853944596305 0.11858141748276414" rpy="-0.00872664626 -4.440892098500626e-16 3.469446951953614e-18" />
+    <axis xyz="0 0 1" />
+    <limit effort="1" velocity="6.28318531" />
+  </joint>
+  <joint name="joint2" type="continuous">
+    <parent link="link1" />
+    <child link="link2" />
+    <origin xyz="0.004061095285957522 0.00039647338195671067 -0.06713444610278956" rpy="-0.7843287810000079 -1.5584680099999997 -2.291919849999992" />
+    <axis xyz="0 0 1" />
+    <limit effort="1" velocity="6.28318531" />
+  </joint>
+  <joint name="joint3" type="continuous">
+    <parent link="link2" />
+    <child link="link3" />
+    <origin xyz="-0.025630710555286207 0.15339323276039843 4.920744263850474e-06" rpy="0.008606016479999996 0.0014459899300001133 8.264550330000075e-05" />
+    <axis xyz="0 0 1" />
+    <limit effort="1" velocity="6.28318531" />
+  </joint>
+  <joint name="joint4" type="continuous">
+    <parent link="link3" />
+    <child link="link4" />
+    <origin xyz="-0.049491961855527844 -0.05873502499891754 0.0010171489711825188" rpy="-0.0012738504100000014 0.00863317441000011 -2.3230171600000112e-05" />
+    <axis xyz="0 0 1" />
+    <limit effort="1" velocity="6.28318531" />
+  </joint>
+  <joint name="joint5" type="continuous">
+    <parent link="link4" />
+    <child link="link5" />
+    <origin xyz="0.011621540847943273 -0.06778105240726977 -0.003707712741363639" rpy="-1.5707963299999648 -1.56288489 -3.001830100000035" />
+    <axis xyz="0 0 1" />
+    <limit effort="1" velocity="6.28318531" />
+  </joint>
+  <joint name="joint6" type="continuous">
+    <parent link="link5" />
+    <child link="link6" />
+    <origin xyz="0.0003427623298188631 0.0034648529691476485 0.06713444611594567" rpy="1.5620454000000001 0.07450727070000007 -0.004068700780000101" />
+    <axis xyz="0 0 1" />
+    <limit effort="1" velocity="6.28318531" />
+  </joint>
+  <link name="tool0" />
+  <joint name="tool0_fixed" type="fixed">
+    <parent link="link6" />
+    <child link="tool0" />
+    <origin xyz="0.017135744404283365 0.08531980020434289 0.03853062780764309" rpy="1.5707963404414487 -1.4390999305933807 1.5674936356501743" />
+  </joint>
+  <link name="trigger">
+    <visual>
+      <geometry>
+        <mesh filename="trigger.stl" scale="1 1 1" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="trigger.stl" scale="1 1 1" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="trigger_joint" type="continuous">
+    <parent link="link6" />
+    <child link="trigger" />
+    <origin xyz="0.017135744404283365 0.08531980020434289 0.03853062780764309" rpy="1.5707963404414487 -1.4390999305933807 1.5674936356501743" />
+    <axis xyz="0 0 1" />
+    <limit effort="1" velocity="6.28318531" />
+  </joint>
+</robot>

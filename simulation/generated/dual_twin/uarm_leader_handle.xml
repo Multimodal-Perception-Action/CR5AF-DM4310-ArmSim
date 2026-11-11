@@ -1,0 +1,20 @@
+<mujoco model="uarm_leader_handle">
+  <compiler angle="radian" meshdir="meshes"/>
+  <option gravity="0 0 0"/>
+  <default>
+    <geom contype="0" conaffinity="0" density="450"/>
+  </default>
+  <asset>
+    <mesh name="leader_handle_mesh" file="Handle_SO101.stl"/>
+    <mesh name="leader_trigger_mesh" file="Trigger_SO101.stl"/>
+  </asset>
+  <worldbody>
+    <body name="leader_handle_mount">
+      <geom name="leader_handle" type="mesh" mesh="leader_handle_mesh" euler="3.14159265359 0 0" rgba="0.20 0.22 0.26 1"/>
+      <body name="leader_trigger" pos="0.0202 0.0188 -0.0234" euler="1.5708 0 0">
+        <joint name="trigger" type="hinge" axis="0 0 1" range="0 0.785398163397" limited="true"/>
+        <geom name="leader_trigger_visual" type="mesh" mesh="leader_trigger_mesh" euler="3.14159265359 0 2.44346095279" rgba="0.96 0.58 0.09 1"/>
+      </body>
+    </body>
+  </worldbody>
+</mujoco>

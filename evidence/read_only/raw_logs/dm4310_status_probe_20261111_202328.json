@@ -1,0 +1,29 @@
+{
+  "timestamp_utc": "2026-11-11T12:23:24.269299+00:00",
+  "operation": "DM status refresh (official opcode 0xCC, read-only)",
+  "request_hex": "D5 4D 53 51 01 00 00 9B",
+  "scales": {
+    "PMAX": 12.5,
+    "VMAX": 30.0,
+    "TMAX": 10.0
+  },
+  "tcp_sent_bytes": 8,
+  "usb_log": "ets Jul 29 2019 12:21:46\r\n\r\nrst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)\r\nconfigsip: 0, SPIWP:0xee\r\nclk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00\r\nmode:DIO, clock div:2\r\nload:0x3fff0030,len:1184\r\nload:0x40078000,len:13232\r\nload:0x40080400,len:3028\r\nentry 0x400805e4\r\n\r\nT-CAN485 DM4310 guarded gateway build 1.4 guarded-fast-preflight\r\nCAN install=ESP_OK mode=NORMAL bitrate_kbps=1000\nCAN start=ESP_OK\nRS485 started: 115200 8N1\nALLOWLIST: CAN 0x7FF parameter-read opcode 0x33 only\r\nALLOWLIST: CAN 0x7FF status-refresh opcode 0xCC only\r\nACTIVE_ALLOWLIST: motor 1 zero-torque enable 250ms then disable\r\nACTIVE_ALLOWLIST: motor 1 disable safety command\r\nACTIVE_ALLOWLIST: motor 1 +0.02 rad return test\r\nACTIVE_ALLOWLIST: calibrated gripper OPEN/CLOSE/STOP\r\nGRIPPER_PROFILE: step=0.10rad feedback_each_step delay=10ms hold<=10\r\nRUNTIME: RS485/TCP60000 only; USB is optional diagnostics\r\nACTIVE_DENY: no position delta, clear-fault, zeroing, parameter write\r\nTX_POLICY: single-shot, no automatic retry\r\nBITRATE_SCAN: 1000,500,250,200,125 kbit/s; stop on ACK\r\nCAN install=ESP_OK mode=NORMAL bitrate_kbps=1000\nCAN start=ESP_OK\nDM_STATUS_TX motor_id=0x001 result=ESP_OK data=01 00 CC 00 00 00 00 00\r\nCAN_ALERTS mask=0x00000006 TX_SUCCESS RX_DATA\r\nCAN_STATUS reason=alert state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nDM_STATUS_TX ACK\r\nCAN_RX id=0x000 ext=0 rtr=0 dlc=8 data=01 76 07 7F F7 FE 1E 1B\r\n",
+  "response_observed": true,
+  "response_packet_hex": "D5 4D 52 50 00 00 00 08 01 76 07 7F F7 FE 1E 1B 91",
+  "feedback": {
+    "response_can_id": 0,
+    "data_hex": "01 76 07 7F F7 FE 1E 1B",
+    "motor_id_low_nibble": 1,
+    "error_code": 0,
+    "state": "disabled/no fault",
+    "position_raw": 30215,
+    "position_rad": -0.9737163347829405,
+    "velocity_raw": 2047,
+    "velocity_rad_s": -0.0073260073260073,
+    "torque_raw": 2046,
+    "torque_nm": -0.0073260073260073,
+    "mos_temperature_c": 30,
+    "rotor_temperature_c": 27
+  }
+}

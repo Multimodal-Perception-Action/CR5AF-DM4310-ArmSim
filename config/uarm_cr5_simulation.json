@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "purpose": "simulation_only",
+  "joint_signs": [
+    -1,
+    1,
+    1.0,
+    1.0,
+    -1.0,
+    1
+  ],
+  "joint_scales": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+  ],
+  "joint_offsets_deg": [
+    -50.835828,
+    -4.958134,
+    -1.329477,
+    -1.289673,
+    6.846253,
+    17.506004
+  ],
+  "pose_alignment": {
+    "scope": "operator-confirmed real CR5 pose to virtual CR5 model pose; hardware targets use the inverse offset",
+    "hardware_commands_enabled": false,
+    "feedback_reference_deg": [
+      -0.405971,
+      83.582069,
+      -139.335709,
+      -0.028678,
+      90.536560,
+      0.015530
+    ],
+    "model_reference_deg": [
+      -51.241799,
+      78.623936,
+      -140.665186,
+      -1.318351,
+      97.382813,
+      17.521534
+    ],
+    "leader_reference_ticks": [117, 473, 3643, 3686, 4045, 352],
+    "supersedes_previous_offsets_deg": [
+      -48.378045,
+      -4.958233,
+      2.010397,
+      -6.211556,
+      -6.776802,
+      14.869277
+    ],
+    "evidence_logs": [
+      "logs/uarm_cr5_dual_twin_20261111_182313.jsonl",
+      "logs/uarm_cr5_dual_twin_20261111_182854.jsonl",
+      "logs/uarm_dobot_preview_20261111_183234.jsonl",
+      "logs/uarm_cr5_axis_follow_20261111_181213.json"
+    ],
+    "operator_confirmed_at_local": "2026-11-11T18:32:34+08:00",
+    "note": "Operator confirmed this pose as corresponding and requiring clearance for gripper installation. The model pose is reconstructed from the active simulation reference and the contemporaneous U-Arm/CR5 read-only snapshot."
+  },
+  "saved_at_utc": "2026-11-11T10:32:34+00:00",
+  "note": "Simulation/model calibration plus inverse real-target coordinate mapping; this file does not enable motion. The current reference is the operator-confirmed gripper-installation clearance pose. Live teleop direction signs and robot controller settings are unchanged."
+}

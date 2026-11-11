@@ -1,0 +1,143 @@
+{
+  "schema_version": 2,
+  "status": "physical_endpoints_confirmed_preview_ready",
+  "leader": {
+    "adapter": "FE-URT-2",
+    "port_detection": "auto_by_CH343_VID_PID_and_known_serial",
+    "baud": 1000000,
+    "servo_id": 7,
+    "encoder_ticks_per_turn": 4096
+  },
+  "endpoints": {
+    "maximum_open": {
+      "ticks": 2591,
+      "single_turn_deg": 227.724609375,
+      "selection": "operator_confirmed_comfortable_maximum_open_pose",
+      "confirmed": true,
+      "capture_samples": 40,
+      "peak_to_peak_ticks": 0,
+      "captured_at_utc": "2026-11-10T08:09:45.085731+00:00",
+      "evidence_log": "logs/uarm_pose_gripper_comfort_max_open_confirmed_20261110_160945.json"
+    },
+    "fully_closed": {
+      "ticks": 2966,
+      "single_turn_deg": 260.68359375,
+      "selection": "operator_confirmed_physical_minimum_and_fully_closed_pose",
+      "confirmed": true,
+      "capture_samples": 40,
+      "peak_to_peak_ticks": 0,
+      "captured_at_utc": "2026-11-10T08:06:30.990127+00:00",
+      "evidence_log": "logs/uarm_pose_gripper_physical_min_fully_closed_corrected_20261110_160630.json"
+    },
+    "midpoint_ticks": 2778.5,
+    "observed_operator_range": {
+      "raw_minimum_ticks": 2005,
+      "raw_maximum_ticks": 3017,
+      "robust_p01_ticks": 2020,
+      "robust_p99_ticks": 2978,
+      "capture_samples": 500,
+      "evidence_log": "logs/uarm_pose_gripper_operator_comfort_range_20261110_155934.json",
+      "note": "Observed motion beyond the active open threshold is intentionally saturated to fully open."
+    },
+    "previous_static_captures": {
+      "maximum_open_ticks": 2895,
+      "fully_closed_ticks": 2962,
+      "note": "Stable labeled captures retained as evidence, but superseded by the repeated operator comfort-range trial."
+    }
+  },
+  "mapping": {
+    "control_mode": "absolute_position_with_early_open_saturation",
+    "incremental_integration_used": false,
+    "raw_encoder_direction": "increasing_uarm_ticks_closes",
+    "physical_mechanism_direction": "increasing_physical_angle_opens",
+    "leader_travel_ticks": 375,
+    "leader_travel_deg": 32.958984375,
+    "physical_opening_ticks": "clamp(-shortest_wrapped_delta(2966, current_ticks), 0, 375)",
+    "normalized_closed_fraction": "clamp(shortest_wrapped_delta(2591, current_ticks) / 375, 0, 1)",
+    "normalized_open_fraction": "1 - normalized_closed_fraction",
+    "at_physical_minimum_behavior": "command_and_hold_safe_fully_closed_target",
+    "at_or_beyond_open_endpoint_behavior": "command_and_hold_safe_fully_open_target",
+    "deadband_ticks": 10,
+    "estimated_midpoint_ticks": 2778.5,
+    "inactive_rate_control_experiment": {
+      "active": false,
+      "open_trigger_ticks": 2587,
+      "open_trigger_single_turn_deg": 227.373046875,
+      "open_trigger_operator_direction": "greater_hand_angle",
+      "open_trigger_encoder_direction": "decreasing_ticks",
+      "open_enter_ticks": 2577,
+      "open_exit_ticks": 2597,
+      "close_trigger_ticks": 2962,
+      "close_trigger_source": "stable_fully_closed_operator_pose",
+      "close_enter_ticks": 2972,
+      "close_exit_ticks": 2952,
+      "trigger_hysteresis_ticks": 10,
+      "neutral_behavior": "hold_last_safe_target",
+      "open_target_rate_rad_per_s": 1.0,
+      "close_target_rate_rad_per_s": 0.6,
+      "preview_update_hz": 20,
+      "startup_target_source_for_live_control": "required_dm4310_feedback",
+      "open_trigger_evidence_log": "logs/uarm_pose_gripper_open_jog_trigger_20261110_160254.json"
+    },
+    "dm4310_target_range": {
+      "direction": "increasing_motor_angle_closes",
+      "measured_open_rad": -0.1479202089568297,
+      "measured_closed_rad": 5.211811232257789,
+      "safe_open_command_rad": -0.0979202089568294,
+      "safe_close_command_rad": 5.301811232257789,
+      "endpoint_margin_rad": 0.05,
+      "open_endpoint_margin_rad": 0.05,
+      "close_endpoint_margin_rad": 0.01,
+      "close_adjustment_note": "2026-11-11 physical endpoints rebased by +2pi after stable feedback +5.211528 rad matched old closed endpoint -1.071374 rad modulo one revolution",
+      "coordinate_rebase_rad": 6.283185307179586,
+      "open_test_passed": true,
+      "close_test_passed": true,
+      "final_disabled_verified": true,
+      "open_evidence_log": "logs/gripper_open_20261111_203107.json",
+      "close_evidence_log": "logs/gripper_close_20261111_203104.json",
+      "revalidated_at_local": "2026-11-11 20:31:07",
+      "uarm_endpoint_mapping_unchanged": true
+    }
+  },
+  "routing": {
+    "arm_joint_servo_ids": [1, 2, 3, 4, 5, 6],
+    "gripper_servo_id": 7,
+    "gripper_is_not_cr5_joint": true,
+    "path": [
+      "U-Arm ID7",
+      "FE-URT-2 TTL",
+      "USB",
+      "Windows PC",
+      "Ethernet",
+      "Dobot CC262 / CR5AF",
+      "tool RS485",
+      "RS485-CAN gateway",
+      "Classic CAN",
+      "DM4310 gripper motor"
+    ]
+  },
+  "safety": {
+    "capture_is_read_only": true,
+    "hardware_output_enabled": true,
+    "hardware_output_profile": "guarded_fixed_open_close_stop_only",
+    "combined_live_evidence_log": "logs/uarm_cr5_full_teleop_20261110_170132.json",
+    "fixed_open_close_hardware_tests_passed": true,
+    "binary_trigger_follow_live_tested": true,
+    "binary_trigger_close_completed": true,
+    "binary_trigger_open_started_and_reversal_stopped_safely": true,
+    "binary_trigger_full_open_completed": true,
+    "binary_trigger_test_logs": [
+      "logs/uarm_gripper_follow_20261110_161941.json",
+      "logs/uarm_gripper_follow_20261110_162102.json",
+      "logs/uarm_gripper_follow_20261110_162331.json",
+      "logs/uarm_gripper_follow_20261110_162538.json"
+    ],
+    "binary_trigger_open_and_close_end_to_end_passed": true,
+    "idle_status_polling_verified": true,
+    "idle_status_polling_note": "TCP60000 status feedback recovered and was repeatedly verified before/after live follow tests at 2026-11-10 16:16-16:21 CST",
+    "require_both_endpoints_before_output": true,
+    "require_confirmed_open_endpoint_before_output": true,
+    "clamp_normalized_command_to_0_1": true,
+    "stop_on_stale_or_invalid_input": true
+  }
+}

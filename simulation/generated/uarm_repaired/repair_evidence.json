@@ -1,0 +1,324 @@
+{
+  "source": "D:\\Desktop\\robot\\uarm_cr10a_teleop_sim\\uarm_cr10a_teleop_sim\\models\\urdf\\uarm_config2_kinematic.urdf",
+  "output": "D:\\Desktop\\robot\\simulation\\generated\\uarm_repaired",
+  "part_reassignment": {
+    "sitter-1": {
+      "old_link": "link6",
+      "new_link": "base_link",
+      "bounds_error_m": 1.0349744963833452e-08,
+      "faces": 920
+    },
+    "sitter-2": {
+      "old_link": "link6",
+      "new_link": "base_link",
+      "bounds_error_m": 1.1546165246123508e-08,
+      "faces": 920
+    },
+    "sitter_mid-1": {
+      "old_link": "link6",
+      "new_link": "base_link",
+      "bounds_error_m": 1.0272109614295477e-08,
+      "faces": 2988
+    },
+    "trigger_short-1": {
+      "old_link": "link6",
+      "new_link": "trigger",
+      "bounds_error_m": 1.573576852967329e-05,
+      "faces": 1400
+    }
+  },
+  "rotating_part_reassignment": [
+    {
+      "joint": 1,
+      "part": "gear_disc",
+      "bounds_error_mm": 0.0032446226284754687,
+      "faces": 5328,
+      "from": "base_link",
+      "to": "link1"
+    },
+    {
+      "joint": 1,
+      "part": "splined_shaft",
+      "bounds_error_mm": 2.5544100502372658e-05,
+      "faces": 14464,
+      "from": "base_link",
+      "to": "link1"
+    },
+    {
+      "joint": 1,
+      "part": "rear_shaft",
+      "bounds_error_mm": 3.685495257421678e-06,
+      "faces": 310,
+      "from": "base_link",
+      "to": "link1"
+    },
+    {
+      "joint": 1,
+      "part": "front_horn",
+      "bounds_error_mm": 3.7300213193702803e-06,
+      "faces": 8242,
+      "from": "base_link",
+      "to": "link1"
+    },
+    {
+      "joint": 1,
+      "part": "rear_horn",
+      "bounds_error_mm": 9.044847306682868e-05,
+      "faces": 6600,
+      "from": "base_link",
+      "to": "link1"
+    },
+    {
+      "joint": 2,
+      "part": "gear_disc",
+      "bounds_error_mm": 0.0032427024952799144,
+      "faces": 5328,
+      "from": "link1",
+      "to": "link2"
+    },
+    {
+      "joint": 2,
+      "part": "splined_shaft",
+      "bounds_error_mm": 2.4306775912918965e-05,
+      "faces": 14464,
+      "from": "link1",
+      "to": "link2"
+    },
+    {
+      "joint": 2,
+      "part": "rear_shaft",
+      "bounds_error_mm": 2.2086082713812516e-06,
+      "faces": 310,
+      "from": "link1",
+      "to": "link2"
+    },
+    {
+      "joint": 2,
+      "part": "front_horn",
+      "bounds_error_mm": 2.375550614885924e-06,
+      "faces": 8242,
+      "from": "link1",
+      "to": "link2"
+    },
+    {
+      "joint": 2,
+      "part": "rear_horn",
+      "bounds_error_mm": 8.742569100661512e-05,
+      "faces": 6600,
+      "from": "link1",
+      "to": "link2"
+    },
+    {
+      "joint": 3,
+      "part": "gear_disc",
+      "bounds_error_mm": 0.0032402512379547943,
+      "faces": 5328,
+      "from": "link2",
+      "to": "link3"
+    },
+    {
+      "joint": 3,
+      "part": "splined_shaft",
+      "bounds_error_mm": 2.3413890628987133e-05,
+      "faces": 14464,
+      "from": "link2",
+      "to": "link3"
+    },
+    {
+      "joint": 3,
+      "part": "rear_shaft",
+      "bounds_error_mm": 7.566409196080315e-06,
+      "faces": 310,
+      "from": "link2",
+      "to": "link3"
+    },
+    {
+      "joint": 3,
+      "part": "front_horn",
+      "bounds_error_mm": 6.493619986613908e-06,
+      "faces": 8242,
+      "from": "link2",
+      "to": "link3"
+    },
+    {
+      "joint": 3,
+      "part": "rear_horn",
+      "bounds_error_mm": 8.689919899040888e-05,
+      "faces": 6600,
+      "from": "link2",
+      "to": "link3"
+    },
+    {
+      "joint": 4,
+      "part": "gear_disc",
+      "bounds_error_mm": 0.0032407026294549723,
+      "faces": 5328,
+      "from": "link3",
+      "to": "link4"
+    },
+    {
+      "joint": 4,
+      "part": "splined_shaft",
+      "bounds_error_mm": 2.3238884477194688e-05,
+      "faces": 14464,
+      "from": "link3",
+      "to": "link4"
+    },
+    {
+      "joint": 4,
+      "part": "rear_shaft",
+      "bounds_error_mm": 1.417855634233689e-06,
+      "faces": 310,
+      "from": "link3",
+      "to": "link4"
+    },
+    {
+      "joint": 4,
+      "part": "front_horn",
+      "bounds_error_mm": 1.147191662553837e-06,
+      "faces": 8242,
+      "from": "link3",
+      "to": "link4"
+    },
+    {
+      "joint": 4,
+      "part": "rear_horn",
+      "bounds_error_mm": 8.70882529220296e-05,
+      "faces": 6600,
+      "from": "link3",
+      "to": "link4"
+    },
+    {
+      "joint": 5,
+      "part": "gear_disc",
+      "bounds_error_mm": 0.003241318816044725,
+      "faces": 5328,
+      "from": "link4",
+      "to": "link5"
+    },
+    {
+      "joint": 5,
+      "part": "splined_shaft",
+      "bounds_error_mm": 2.085404660157053e-05,
+      "faces": 14464,
+      "from": "link4",
+      "to": "link5"
+    },
+    {
+      "joint": 5,
+      "part": "rear_shaft",
+      "bounds_error_mm": 3.5815993033594395e-06,
+      "faces": 310,
+      "from": "link4",
+      "to": "link5"
+    },
+    {
+      "joint": 5,
+      "part": "front_horn",
+      "bounds_error_mm": 3.4701232909384316e-06,
+      "faces": 8242,
+      "from": "link4",
+      "to": "link5"
+    },
+    {
+      "joint": 5,
+      "part": "rear_horn",
+      "bounds_error_mm": 8.908282495667663e-05,
+      "faces": 6600,
+      "from": "link4",
+      "to": "link5"
+    },
+    {
+      "joint": 6,
+      "part": "gear_disc",
+      "bounds_error_mm": 0.0032409865639824176,
+      "faces": 5328,
+      "from": "link5",
+      "to": "link6"
+    },
+    {
+      "joint": 6,
+      "part": "splined_shaft",
+      "bounds_error_mm": 2.448150601175314e-05,
+      "faces": 14464,
+      "from": "link5",
+      "to": "link6"
+    },
+    {
+      "joint": 6,
+      "part": "rear_shaft",
+      "bounds_error_mm": 3.092657951953015e-06,
+      "faces": 310,
+      "from": "link5",
+      "to": "link6"
+    },
+    {
+      "joint": 6,
+      "part": "front_horn",
+      "bounds_error_mm": 2.4641278724146787e-06,
+      "faces": 8242,
+      "from": "link5",
+      "to": "link6"
+    },
+    {
+      "joint": 6,
+      "part": "rear_horn",
+      "bounds_error_mm": 8.638907683788943e-05,
+      "faces": 6600,
+      "from": "link5",
+      "to": "link6"
+    },
+    {
+      "joint": 7,
+      "part": "gear_disc",
+      "bounds_error_mm": 0.0032428423857933097,
+      "faces": 5328,
+      "from": "link6",
+      "to": "trigger"
+    },
+    {
+      "joint": 7,
+      "part": "splined_shaft",
+      "bounds_error_mm": 2.4015619155548507e-05,
+      "faces": 14464,
+      "from": "link6",
+      "to": "trigger"
+    },
+    {
+      "joint": 7,
+      "part": "rear_shaft",
+      "bounds_error_mm": 3.99644161097612e-06,
+      "faces": 310,
+      "from": "link6",
+      "to": "trigger"
+    },
+    {
+      "joint": 7,
+      "part": "front_horn",
+      "bounds_error_mm": 1.7462704153814457e-06,
+      "faces": 8242,
+      "from": "link6",
+      "to": "trigger"
+    },
+    {
+      "joint": 7,
+      "part": "rear_horn",
+      "bounds_error_mm": 8.788171464146899e-05,
+      "faces": 6600,
+      "from": "link6",
+      "to": "trigger"
+    }
+  ],
+  "axis_source": "step_axis_evidence.json",
+  "all_seven_old_axis_offsets_mm": [
+    25.530618872248358,
+    25.53061887224837,
+    25.530618872248347,
+    25.530618872248347,
+    25.530618872248343,
+    25.53061887224833,
+    25.53061887224836
+  ],
+  "hardware_access": false,
+  "directions_and_physical_zero": "require separate visual registration"
+}

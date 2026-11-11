@@ -1,0 +1,7 @@
+leader_joint,follower_joint,default_sign,scale,status
+UArm_J1,CR10A_J1,1,1,index/topology verified; positive direction requires hardware check
+UArm_J2,CR10A_J2,-1,1,index/topology verified; positive direction requires hardware check
+UArm_J3,CR10A_J3,1,1,index/topology verified; positive direction requires hardware check
+UArm_J4,CR10A_J4,1,1,index/topology verified; positive direction requires hardware check
+UArm_J5,CR10A_J5,1,1,index/topology verified; positive direction requires hardware check
+UArm_J6,CR10A_J6,1,1,index/topology verified; positive direction requires hardware check

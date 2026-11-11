@@ -1,0 +1,12 @@
+{
+  "timestamp_utc": "2026-11-10T07:12:27.939619+00:00",
+  "robot_host": "192.168.201.1",
+  "robot_port": 60000,
+  "serial_port": "COM6",
+  "probe_hex": "D5 4D 01 00 54 45 53 54",
+  "can_transmit_expected": false,
+  "tcp_sent_bytes": 8,
+  "serial_received_bytes": 54,
+  "serial_text": "RS485_REJECT bad_header data=D5 4D 01 00 54 45 53 54\r\n",
+  "probe_observed": true
+}

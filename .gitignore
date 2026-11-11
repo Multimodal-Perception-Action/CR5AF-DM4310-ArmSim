@@ -25,3 +25,12 @@ renders/
 # Windows/macOS
 Thumbs.db
 .DS_Store
+# PlatformIO/build output
+.pio/
+**/.pio/
+*.elf
+*.map
+*.bin
+**/.github_token
+**/Vpn Tokens*
+**/Trust Tokens*

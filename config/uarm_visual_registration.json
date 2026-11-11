@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "purpose": "display_only",
+  "signs": [
+    1.0,
+    -1.0,
+    -1.0,
+    -1.0,
+    -1.0,
+    1.0,
+    1.0
+  ],
+  "offsets_deg": [
+    0.0,
+    86.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "confirmed_by_operator": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+  ],
+  "input_reference": "caller-provided encoder relative degrees; unchanged by this file",
+  "note": "Manual visual settings only; not robot control or collision calibration.",
+  "saved_at_utc": "2026-11-11T06:19:16.972893+00:00",
+  "reference_signature": {
+    "model": "uarm_output_axes_v1",
+    "center_ticks": [
+      116,
+      3522,
+      3637,
+      3703,
+      4092,
+      285,
+      2966
+    ]
+  }
+}

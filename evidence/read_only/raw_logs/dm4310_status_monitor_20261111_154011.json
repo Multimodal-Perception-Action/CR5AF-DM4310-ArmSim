@@ -1,0 +1,150 @@
+{
+  "timestamp_utc": "2026-11-11T07:40:06.716176+00:00",
+  "operation": "repeated DM status refresh (official opcode 0xCC, read-only)",
+  "requested_samples": 5,
+  "interval_seconds": 0.25,
+  "request_hex": "D5 4D 53 51 01 00 00 9B",
+  "scales": {
+    "PMAX": 12.5,
+    "VMAX": 30.0,
+    "TMAX": 10.0
+  },
+  "samples": [
+    {
+      "index": 0,
+      "elapsed_seconds": 1.479999627918005e-05,
+      "response_observed": true,
+      "latency_ms": 77.47190000372939,
+      "packet_hex": "D5 4D 52 50 00 00 00 08 01 99 F4 7F F7 FE 1A 18 8A",
+      "feedback": {
+        "response_can_id": 0,
+        "data_hex": "01 99 F4 7F F7 FE 1A 18",
+        "motor_id_low_nibble": 1,
+        "error_code": 0,
+        "state": "disabled/no fault",
+        "position_raw": 39412,
+        "position_rad": 2.5347142748149842,
+        "velocity_raw": 2047,
+        "velocity_rad_s": -0.0073260073260073,
+        "torque_raw": 2046,
+        "torque_nm": -0.0073260073260073,
+        "mos_temperature_c": 26,
+        "rotor_temperature_c": 24
+      }
+    },
+    {
+      "index": 1,
+      "elapsed_seconds": 0.25050339999143034,
+      "response_observed": true,
+      "latency_ms": 63.31749999662861,
+      "packet_hex": "D5 4D 52 50 00 00 00 08 01 99 F4 7F F7 FF 1A 18 8B",
+      "feedback": {
+        "response_can_id": 0,
+        "data_hex": "01 99 F4 7F F7 FF 1A 18",
+        "motor_id_low_nibble": 1,
+        "error_code": 0,
+        "state": "disabled/no fault",
+        "position_raw": 39412,
+        "position_rad": 2.5347142748149842,
+        "velocity_raw": 2047,
+        "velocity_rad_s": -0.0073260073260073,
+        "torque_raw": 2047,
+        "torque_nm": -0.0024420024420024333,
+        "mos_temperature_c": 26,
+        "rotor_temperature_c": 24
+      }
+    },
+    {
+      "index": 2,
+      "elapsed_seconds": 0.5003605000092648,
+      "response_observed": true,
+      "latency_ms": 78.02699998137541,
+      "packet_hex": "D5 4D 52 50 00 00 00 08 01 99 F4 7F F7 FE 1A 18 8A",
+      "feedback": {
+        "response_can_id": 0,
+        "data_hex": "01 99 F4 7F F7 FE 1A 18",
+        "motor_id_low_nibble": 1,
+        "error_code": 0,
+        "state": "disabled/no fault",
+        "position_raw": 39412,
+        "position_rad": 2.5347142748149842,
+        "velocity_raw": 2047,
+        "velocity_rad_s": -0.0073260073260073,
+        "torque_raw": 2046,
+        "torque_nm": -0.0073260073260073,
+        "mos_temperature_c": 26,
+        "rotor_temperature_c": 24
+      }
+    },
+    {
+      "index": 3,
+      "elapsed_seconds": 0.750356800010195,
+      "response_observed": true,
+      "latency_ms": 62.10849998751655,
+      "packet_hex": "D5 4D 52 50 00 00 00 08 01 99 F4 7F F7 FE 1A 18 8A",
+      "feedback": {
+        "response_can_id": 0,
+        "data_hex": "01 99 F4 7F F7 FE 1A 18",
+        "motor_id_low_nibble": 1,
+        "error_code": 0,
+        "state": "disabled/no fault",
+        "position_raw": 39412,
+        "position_rad": 2.5347142748149842,
+        "velocity_raw": 2047,
+        "velocity_rad_s": -0.0073260073260073,
+        "torque_raw": 2046,
+        "torque_nm": -0.0073260073260073,
+        "mos_temperature_c": 26,
+        "rotor_temperature_c": 24
+      }
+    },
+    {
+      "index": 4,
+      "elapsed_seconds": 1.0005744000081904,
+      "response_observed": true,
+      "latency_ms": 77.54779999959283,
+      "packet_hex": "D5 4D 52 50 00 00 00 08 01 99 F4 7F F7 FE 1A 18 8A",
+      "feedback": {
+        "response_can_id": 0,
+        "data_hex": "01 99 F4 7F F7 FE 1A 18",
+        "motor_id_low_nibble": 1,
+        "error_code": 0,
+        "state": "disabled/no fault",
+        "position_raw": 39412,
+        "position_rad": 2.5347142748149842,
+        "velocity_raw": 2047,
+        "velocity_rad_s": -0.0073260073260073,
+        "torque_raw": 2046,
+        "torque_nm": -0.0073260073260073,
+        "mos_temperature_c": 26,
+        "rotor_temperature_c": 24
+      }
+    }
+  ],
+  "usb_log": "CAN install=ESP_OK mode=NORMAL bitrate_kbps=1000\nCAN start=ESP_OK\nDM_STATUS_TX motor_id=0x001 result=ESP_OK data=01 00 CC 00 00 00 00 00\r\nCAN_ALERTS mask=0x00000006 TX_SUCCESS RX_DATA\r\nCAN_STATUS reason=alert state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nDM_STATUS_TX ACK\r\nCAN_RX id=0x000 ext=0 rtr=0 dlc=8 data=01 99 F4 7F F7 FE 1A 18\r\nCAN install=ESP_OK mode=NORMAL bitrate_kbps=1000\nCAN start=ESP_OK\nDM_STATUS_TX motor_id=0x001 result=ESP_OK data=01 00 CC 00 00 00 00 00\r\nCAN_ALERTS mask=0x00000006 TX_SUCCESS RX_DATA\r\nCAN_STATUS reason=alert state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nDM_STATUS_TX ACK\r\nCAN_RX id=0x000 ext=0 rtr=0 dlc=8 data=01 99 F4 7F F7 FF 1A 18\r\nCAN install=ESP_OK mode=NORMAL bitrate_kbps=1000\nCAN start=ESP_OK\nDM_STATUS_TX motor_id=0x001 result=ESP_OK data=01 00 CC 00 00 00 00 00\r\nCAN_ALERTS mask=0x00000006 TX_SUCCESS RX_DATA\r\nCAN_STATUS reason=alert state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nDM_STATUS_TX ACK\r\nCAN_RX id=0x000 ext=0 rtr=0 dlc=8 data=01 99 F4 7F F7 FE 1A 18\r\nCAN install=ESP_OK mode=NORMAL bitrate_kbps=1000\nCAN start=ESP_OK\nDM_STATUS_TX motor_id=0x001 result=ESP_OK data=01 00 CC 00 00 00 00 00\r\nCAN_ALERTS mask=0x00000006 TX_SUCCESS RX_DATA\r\nCAN_STATUS reason=alert state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nDM_STATUS_TX ACK\r\nCAN_RX id=0x000 ext=0 rtr=0 dlc=8 data=01 99 F4 7F F7 FE 1A 18\r\nCAN install=ESP_OK mode=NORMAL bitrate_kbps=1000\nCAN start=ESP_OK\nDM_STATUS_TX motor_id=0x001 result=ESP_OK data=01 00 CC 00 00 00 00 00\r\nCAN_ALERTS mask=0x00000006 TX_SUCCESS RX_DATA\r\nCAN_STATUS reason=alert state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nDM_STATUS_TX ACK\r\nCAN_RX id=0x000 ext=0 rtr=0 dlc=8 data=01 99 F4 7F F7 FE 1A 18\r\n",
+  "successful_samples": 5,
+  "all_samples_successful": true,
+  "summary": {
+    "latency_ms_min": 62.10849998751655,
+    "latency_ms_max": 78.02699998137541,
+    "latency_ms_mean": 71.69453999376856,
+    "error_codes": [
+      0
+    ],
+    "states": [
+      "disabled/no fault"
+    ],
+    "position_rad_min": 2.5347142748149842,
+    "position_rad_max": 2.5347142748149842,
+    "velocity_rad_s_min": -0.0073260073260073,
+    "velocity_rad_s_max": -0.0073260073260073,
+    "torque_nm_min": -0.0073260073260073,
+    "torque_nm_max": -0.0024420024420024333,
+    "mos_temperature_c": [
+      26
+    ],
+    "rotor_temperature_c": [
+      24
+    ]
+  }
+}
