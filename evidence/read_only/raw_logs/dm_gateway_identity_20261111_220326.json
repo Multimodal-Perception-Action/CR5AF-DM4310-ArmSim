@@ -1,0 +1,23 @@
+{
+  "timestamp_utc": "2026-11-11T14:03:26.061528+00:00",
+  "probe": "gateway identity only",
+  "host": "192.168.201.1",
+  "port": 60000,
+  "request_hex": "D5 4D 49 51 01 00 60 E1",
+  "motor_command_sent": false,
+  "can_status_request_sent": false,
+  "response_hex": "D5 4D 47 50 01 01 00 10 CD CC 4C 40 00 00 00 00 92",
+  "decoded": {
+    "event": 1,
+    "result": 1,
+    "motor_error": 0,
+    "flags": 16,
+    "verified_disabled": false,
+    "contact_detected": false,
+    "position_rad": 3.200000047683716,
+    "target_rad": 0.0,
+    "packet_hex": "D5 4D 47 50 01 01 00 10 CD CC 4C 40 00 00 00 00 92"
+  },
+  "passed": true,
+  "log_file": "D:\\Desktop\\robot\\logs\\dm_gateway_identity_20261111_220326.json"
+}

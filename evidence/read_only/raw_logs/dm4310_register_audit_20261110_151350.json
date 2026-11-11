@@ -1,0 +1,81 @@
+{
+  "timestamp_utc": "2026-11-10T07:13:45.345269+00:00",
+  "operation": "fixed allowlist of DM parameter reads only",
+  "motor_id": 1,
+  "registers": {
+    "MST_ID": {
+      "rid": "0x07",
+      "request_hex": "D5 4D 52 51 01 00 07 9D",
+      "usb_log": "CAN install=ESP_OK mode=NORMAL bitrate_kbps=1000\nCAN start=ESP_OK\nDM_READ_TX bitrate_kbps=1000 motor_id=0x001 rid=0x07 result=ESP_OK data=01 00 33 07 00 00 00 00\r\nCAN_STATUS reason=queued state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nCAN_ALERTS mask=0x00000006 TX_SUCCESS RX_DATA\r\nCAN_STATUS reason=alert state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nCAN_SCAN_RESULT bitrate_kbps=1000 ACK\nCAN_RX id=0x000 ext=0 rtr=0 dlc=8 data=01 00 33 07 00 00 00 00\r\n",
+      "response_observed": true,
+      "response_packet_hex": "D5 4D 52 50 00 00 00 08 01 00 33 07 00 00 00 00 A7",
+      "response_can_id": 0,
+      "value_hex": "00 00 00 00",
+      "uint32_le": 0
+    },
+    "ESC_ID": {
+      "rid": "0x08",
+      "request_hex": "D5 4D 52 51 01 00 08 92",
+      "usb_log": "CAN install=ESP_OK mode=NORMAL bitrate_kbps=1000\nCAN start=ESP_OK\nDM_READ_TX bitrate_kbps=1000 motor_id=0x001 rid=0x08 result=ESP_OK data=01 00 33 08 00 00 00 00\r\nCAN_STATUS reason=queued state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nCAN_ALERTS mask=0x00000006 TX_SUCCESS RX_DATA\r\nCAN_STATUS reason=alert state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nCAN_SCAN_RESULT bitrate_kbps=1000 ACK\nCAN_RX id=0x000 ext=0 rtr=0 dlc=8 data=01 00 33 08 01 00 00 00\r\n",
+      "response_observed": true,
+      "response_packet_hex": "D5 4D 52 50 00 00 00 08 01 00 33 08 01 00 00 00 A9",
+      "response_can_id": 0,
+      "value_hex": "01 00 00 00",
+      "uint32_le": 1
+    },
+    "hw_ver": {
+      "rid": "0x0D",
+      "request_hex": "D5 4D 52 51 01 00 0D 97",
+      "usb_log": "CAN install=ESP_OK mode=NORMAL bitrate_kbps=1000\nCAN start=ESP_OK\nDM_READ_TX bitrate_kbps=1000 motor_id=0x001 rid=0x0D result=ESP_OK data=01 00 33 0D 00 00 00 00\r\nCAN_STATUS reason=queued state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nCAN_ALERTS mask=0x00000006 TX_SUCCESS RX_DATA\r\nCAN_STATUS reason=alert state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nCAN_SCAN_RESULT bitrate_kbps=1000 ACK\nCAN_RX id=0x000 ext=0 rtr=0 dlc=8 data=01 00 33 0D 34 30 30 56\r\n",
+      "response_observed": true,
+      "response_packet_hex": "D5 4D 52 50 00 00 00 08 01 00 33 0D 34 30 30 56 CF",
+      "response_can_id": 0,
+      "value_hex": "34 30 30 56",
+      "uint32_le": 1445998644,
+      "ascii": "400V"
+    },
+    "sw_ver": {
+      "rid": "0x0E",
+      "request_hex": "D5 4D 52 51 01 00 0E 94",
+      "usb_log": "CAN install=ESP_OK mode=NORMAL bitrate_kbps=1000\nCAN start=ESP_OK\nDM_READ_TX bitrate_kbps=1000 motor_id=0x001 rid=0x0E result=ESP_OK data=01 00 33 0E 00 00 00 00\r\nCAN_STATUS reason=queued state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nCAN_ALERTS mask=0x00000006 TX_SUCCESS RX_DATA\r\nCAN_STATUS reason=alert state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nCAN_SCAN_RESULT bitrate_kbps=1000 ACK\nCAN_RX id=0x000 ext=0 rtr=0 dlc=8 data=01 00 33 0E 37 30 31 38\r\n",
+      "response_observed": true,
+      "response_packet_hex": "D5 4D 52 50 00 00 00 08 01 00 33 0E 37 30 31 38 A0",
+      "response_can_id": 0,
+      "value_hex": "37 30 31 38",
+      "uint32_le": 942747703,
+      "ascii": "7018"
+    },
+    "can_br": {
+      "rid": "0x23",
+      "request_hex": "D5 4D 52 51 01 00 23 B9",
+      "usb_log": "CAN install=ESP_OK mode=NORMAL bitrate_kbps=1000\nCAN start=ESP_OK\nDM_READ_TX bitrate_kbps=1000 motor_id=0x001 rid=0x23 result=ESP_OK data=01 00 33 23 00 00 00 00\r\nCAN_STATUS reason=queued state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nCAN_ALERTS mask=0x00000006 TX_SUCCESS RX_DATA\r\nCAN_STATUS reason=alert state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nCAN_SCAN_RESULT bitrate_kbps=1000 ACK\nCAN_RX id=0x000 ext=0 rtr=0 dlc=8 data=01 00 33 23 04 00 00 00\r\n",
+      "response_observed": true,
+      "response_packet_hex": "D5 4D 52 50 00 00 00 08 01 00 33 23 04 00 00 00 87",
+      "response_can_id": 0,
+      "value_hex": "04 00 00 00",
+      "uint32_le": 4,
+      "can_bitrate": "1 Mbit/s Classic CAN"
+    },
+    "sub_ver": {
+      "rid": "0x24",
+      "request_hex": "D5 4D 52 51 01 00 24 BE",
+      "usb_log": "CAN install=ESP_OK mode=NORMAL bitrate_kbps=1000\nCAN start=ESP_OK\nDM_READ_TX bitrate_kbps=1000 motor_id=0x001 rid=0x24 result=ESP_OK data=01 00 33 24 00 00 00 00\r\nCAN_STATUS reason=queued state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nCAN_ALERTS mask=0x00000006 TX_SUCCESS RX_DATA\r\nCAN_STATUS reason=alert state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nCAN_SCAN_RESULT bitrate_kbps=1000 ACK\nCAN_RX id=0x000 ext=0 rtr=0 dlc=8 data=01 00 33 24 39 00 00 00\r\n",
+      "response_observed": true,
+      "response_packet_hex": "D5 4D 52 50 00 00 00 08 01 00 33 24 39 00 00 00 BD",
+      "response_can_id": 0,
+      "value_hex": "39 00 00 00",
+      "uint32_le": 57
+    },
+    "Boot_ver": {
+      "rid": "0x25",
+      "request_hex": "D5 4D 52 51 01 00 25 BF",
+      "usb_log": "CAN install=ESP_OK mode=NORMAL bitrate_kbps=1000\nCAN start=ESP_OK\nDM_READ_TX bitrate_kbps=1000 motor_id=0x001 rid=0x25 result=ESP_OK data=01 00 33 25 00 00 00 00\r\nCAN_STATUS reason=queued state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nCAN_ALERTS mask=0x00000006 TX_SUCCESS RX_DATA\r\nCAN_STATUS reason=alert state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nCAN_SCAN_RESULT bitrate_kbps=1000 ACK\nCAN_RX id=0x000 ext=0 rtr=0 dlc=8 data=01 00 33 25 03 02 00 06\r\n",
+      "response_observed": true,
+      "response_packet_hex": "D5 4D 52 50 00 00 00 08 01 00 33 25 03 02 00 06 82",
+      "response_can_id": 0,
+      "value_hex": "03 02 00 06",
+      "uint32_le": 100663811
+    }
+  },
+  "all_responses_observed": true
+}
