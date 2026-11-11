@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "status": "robot_origin_and_leader_center_confirmed_waiting_for_axis_ranges",
+  "robot": {
+    "model": "Dobot CR5AF",
+    "official_model_joint_limits_deg": [
+      [-359.8175, 359.8175],
+      [-359.8175, 359.8175],
+      [-160.0271, 160.0271],
+      [-359.8175, 359.8175],
+      [-359.8175, 359.8175],
+      [-359.8175, 359.8175]
+    ],
+    "limit_source": "official/TCP-IP-ROS-6AXis-models/dobot_description/urdf/cr5_robot.urdf",
+    "controller_origin": {
+      "joint_deg": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+      "tcp_pose_mm_deg": [-1.5261, -258.4781, 1047.7859, -89.9911, 0.0002, 179.7293],
+      "captured_robot_mode_before_safety_disable": 5,
+      "captured_error_ids": [],
+      "safety_disable_completed": true,
+      "robot_mode_after_disable": 4,
+      "confirmed_as_controller_origin": true,
+      "confirmed_as_operational_home": false,
+      "operational_note": "All-zero is the controller origin, but the arm is highly extended and J5 is near a wrist singularity. Do not automatically use it as the final teleoperation home."
+    },
+    "safe_home_candidate": {
+      "joint_deg_controller_representation": [312.2704, -10.9316, -73.2047, -12.0008, 115.1888, 21.8282],
+      "joint_deg_canonical_equivalent": [-47.7296, -10.9316, -73.2047, -12.0008, 115.1888, 21.8282],
+      "tcp_pose_mm_deg": [293.2711, -462.3925, 484.4560, 164.0307, 20.6729, -164.2282],
+      "captured_robot_mode": 4,
+      "captured_error_ids": [],
+      "repeated_return_tests_passed": true,
+      "operator_designated_as_final_home": false,
+      "note": "Use the controller representation for motion continuity. The canonical J1 value is descriptive only; do not command an automatic wrap across +/-180 degrees."
+    },
+    "operational_home": {
+      "joint_deg": [0.004704541526734829, 58.3517951965332, -151.51458740234375, 17.148183822631836, 76.82969665527344, 28.401752471923828],
+      "tcp_pose_mm_deg": [132.1881103515625, -169.31114196777344, 266.8461608886719, -161.6835479736328, -4.203463554382324, -120.96967315673828],
+      "captured_robot_mode": 5,
+      "captured_enable_status": 1,
+      "captured_running_status": 0,
+      "captured_error_status": 0,
+      "operator_designated_as_final_home": true,
+      "j1_is_center_zero": true,
+      "evidence_log": "logs/feedback_30004_20261111_203413.jsonl",
+      "captured_at_local": "2026-11-11 20:34:13",
+      "note": "Return the full six-axis pose, not J1 alone. Use only after a normal operator return-home request."
+    }
+  },
+  "leader": {
+    "adapter": "FE-URT-2",
+    "baud": 1000000,
+    "servo_ids": [1, 2, 3, 4, 5, 6],
+    "center_candidate_ticks": [116, 3522, 3637, 3703, 4092, 285],
+    "center_candidate_deg_single_turn": [10.1953125, 309.55078125, 319.658203125, 325.458984375, 359.6484375, 25.048828125],
+    "center_capture_peak_to_peak_ticks": [0, 0, 0, 0, 0, 0],
+    "operator_designated_as_final_center": true,
+    "center_evidence_log": "logs/calibration_panel_20261110_193835_503345.jsonl",
+    "negative_endpoints_ticks_relative": [null, null, null, null, null, null],
+    "positive_endpoints_ticks_relative": [null, null, null, null, null, null]
+  },
+  "mapping": {
+    "joint_signs": [1.0, -1.0, 1.0, 1.0, 1.0, 1.0],
+    "type": "piecewise_asymmetric_about_confirmed_centers",
+    "negative_side": "robot_home + leader_delta/abs(leader_negative_span) * robot_negative_span",
+    "positive_side": "robot_home + leader_delta/leader_positive_span * robot_positive_span",
+    "robot_negative_spans_deg": [null, null, null, null, null, null],
+    "robot_positive_spans_deg": [null, null, null, null, null, null],
+    "output_clamp_required": true
+  },
+  "safety": {
+    "all_zero_joint_pose_is_controller_origin_not_automatic_operational_home": true,
+    "automatic_move_to_home_enabled": true,
+    "automatic_return_policy": "normal_return_home_request_only; never on fault, stale heartbeat, communication error, alarm, or emergency stop",
+    "full_range_mapping_enabled": false,
+    "official_joint_limits_are_not_collision_free_workspace_limits": true,
+    "required_validation_sequence": ["simulation", "+/-5deg", "+/-10deg", "per-axis staged envelope", "combined staged envelope"]
+  }
+}

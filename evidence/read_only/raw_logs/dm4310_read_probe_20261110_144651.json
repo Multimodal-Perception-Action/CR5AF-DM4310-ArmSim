@@ -1,0 +1,16 @@
+{
+  "timestamp_utc": "2026-11-10T06:46:44.540524+00:00",
+  "motor_id": 1,
+  "rid": 14,
+  "request_hex": "D5 4D 52 51 01 00 0E 94",
+  "operation": "DM parameter read (CAN 0x7FF/opcode 0x33)",
+  "gateway_ready_marker": false,
+  "gateway_startup_wait_completed": true,
+  "tcp_sent_bytes": 8,
+  "usb_log": "DM_READ_TX motor_id=0x001 rid=0x0E result=ESP_OK data=01 00 33 0E 00 00 00 00\r\nCAN_STATUS reason=queued state=RUNNING tx_queue=0 rx_queue=0 tx_err=16 rx_err=0 tx_failed=2 bus_errors=2 arb_lost=0\nCAN_ALERTS mask=0x00000600 TX_FAILED BUS_ERROR\r\nCAN_STATUS reason=alert state=RUNNING tx_queue=0 rx_queue=0 tx_err=16 rx_err=0 tx_failed=2 bus_errors=2 arb_lost=0\n",
+  "tcp_reply_hex": "",
+  "can_response_observed": false,
+  "can_ack_observed": false,
+  "can_tx_failed_observed": true,
+  "can_bus_error_observed": true
+}

@@ -1,0 +1,142 @@
+{
+  "motion_unlocked": false,
+  "full_teleop_unlocked": true,
+  "full_teleop_unlock_profile": {
+    "authorized_by": "operator_requested_complete_end_to_end_testing",
+    "unlocked_at_local": "2026-11-10",
+    "maximum_relative_deg_per_joint": 5.0,
+    "maximum_speed_deg_s": 3.0,
+    "maximum_duration_s": 30.0,
+    "staged_envelope": "post-calibration progression from +/-2 degrees to explicit +/-5 degree test",
+    "requires_explicit_cli_interlocks": true,
+    "legacy_motion_unlocked_remains_false": true
+  },
+  "mapping_validated": true,
+  "power_validated": true,
+  "cr5_joint_smoke_test": {
+    "passed": true,
+    "delta_deg": 1.0,
+    "velocity_percent": 5,
+    "acceleration_percent": 5,
+    "all_six_joints_returned": true,
+    "final_disable_verified": true,
+    "maximum_observed_target_error_deg": 0.001316070556640625,
+    "evidence_log": "logs/cr5_joint_smoke_20261110_163756.json"
+  },
+  "power_validation": {
+    "method": "operator_acceptance_of_device_readback",
+    "accepted_voltage_range_v": [5.0, 9.0],
+    "documented_c046_range_v": [5.0, 8.4],
+    "maximum_temperature_c": 60.0,
+    "require_status_register_zero": true,
+    "require_voltage_alarm_clear": true,
+    "accepted_at_local": "2026-11-10",
+    "note": "Operator explicitly accepted 8.8-8.9 V device readback with status register 0; this is not a multimeter measurement."
+  },
+  "input_calibration": {
+    "method": "200_sample_read_only_static_capture",
+    "neutral_ticks": [104, 477, 3677, 3646, 4023, 315, 2739],
+    "peak_to_peak_ticks": [0, 0, 0, 0, 0, 0, 0],
+    "joint_input_deadband_ticks": [2, 2, 2, 2, 2, 2],
+    "neutral_is_session_relative": true,
+    "note": "The fixed capture is diagnostic evidence. Every live session still captures its own startup neutral, so moving or re-posing the leader before launch does not create a jump.",
+    "evidence_log": "logs/uarm_pose_neutral_after_full_validation_20261110_170522.json"
+  },
+  "warning_policy": {
+    "advisory_only": [
+      "device voltage readback 8.5-9.0 V while the STS3215 C046 documented range ends at 8.4 V, only when status register and voltage-alarm bit remain clear"
+    ],
+    "hard_abort": [
+      "any communication result or packet error",
+      "status register nonzero or voltage-alarm bit set",
+      "temperature at or above 60 C",
+      "device voltage outside operator-accepted 5.0-9.0 V",
+      "leader torque enabled or operating mode not zero",
+      "CR5 feedback older than 250 ms, CR5 error status, or unexpected enable state",
+      "DM4310 fault, excessive temperature, or missing verified-disabled terminal event"
+    ],
+    "power_monitor_evidence_log": "logs/uarm_power_monitor_20261110_170513.jsonl"
+  },
+  "joint_signs": [1.0, -1.0, 1.0, 1.0, 1.0, 1.0],
+  "joint_direction_validation": [
+    {"servo_id": 1, "cr5_joint": 1, "sign": 1.0, "source": "upstream servo2Dobot.py", "physical_validation": "passed", "evidence_log": "logs/uarm_cr5_axis_follow_20261110_164933.json"},
+    {"servo_id": 2, "cr5_joint": 2, "sign": -1.0, "source": "upstream servo2Dobot.py", "physical_validation": "passed", "evidence_log": "logs/uarm_cr5_axis_follow_20261110_164958.json"},
+    {"servo_id": 3, "cr5_joint": 3, "sign": 1.0, "source": "upstream servo2Dobot.py", "physical_validation": "passed", "evidence_log": "logs/uarm_cr5_axis_follow_20261110_165121.json"},
+    {"servo_id": 4, "cr5_joint": 4, "sign": 1.0, "source": "upstream servo2Dobot.py", "physical_validation": "passed", "evidence_log": "logs/uarm_cr5_axis_follow_20261110_165156.json"},
+    {"servo_id": 5, "cr5_joint": 5, "sign": 1.0, "source": "upstream servo2Dobot.py", "physical_validation": "passed", "evidence_log": "logs/uarm_cr5_axis_follow_20261110_165224.json"},
+    {"servo_id": 6, "cr5_joint": 6, "sign": 1.0, "source": "upstream servo2Dobot.py", "physical_validation": "passed", "evidence_log": "logs/uarm_cr5_axis_follow_20261110_165300.json"}
+  ],
+  "single_axis_end_to_end_validation": {
+    "passed": true,
+    "maximum_cr5_excursion_deg": 1.048675537109375,
+    "all_sessions_returned_to_baseline": true,
+    "all_sessions_final_disable_verified": true
+  },
+  "full_teleop_validation": {
+    "control_loop_passed": true,
+    "physical_joint_motion_in_combined_session": true,
+    "note": "The second 20 s combined session moved all six CR5 joints to the guarded +/-2 degree clamp, exercised the gripper, and returned to baseline.",
+    "arm_samples": 400,
+    "arm_command_replies": 400,
+    "all_six_joints_reached_guarded_clamp": true,
+    "maximum_cr5_excursion_deg": [2.0, 2.0, 2.0, 2.0, 2.0, 2.0],
+    "gripper_close_passed": true,
+    "gripper_reversal_stops_passed": 2,
+    "gripper_verified_disabled": true,
+    "cr5_final_disable_verified": true,
+    "cr5_final_error_status": 0,
+    "dm_final_disabled_no_fault": true,
+    "evidence_log": "logs/uarm_cr5_full_teleop_20261110_170412.json"
+  },
+  "post_calibration_live_validation": {
+    "passed": true,
+    "input_deadband_ticks": [2, 2, 2, 2, 2, 2],
+    "all_six_joints_reached_guarded_clamp": true,
+    "command_and_actual_maximum_deg": [2.0, 2.0, 2.0, 2.0, 2.0, 2.0],
+    "arm_samples": 400,
+    "arm_command_replies": 400,
+    "gripper_open_completed": true,
+    "gripper_close_stop_verified": true,
+    "baseline_return_maximum_error_deg": 0.000091552734375,
+    "cr5_final_disable_verified": true,
+    "cr5_final_error_status": 0,
+    "dm_final_disabled_no_fault": true,
+    "advisory_warning_codes": ["UARM_VOLTAGE_READBACK"],
+    "hard_warning_count": 0,
+    "evidence_log": "logs/uarm_cr5_full_teleop_20261110_171018.json"
+  },
+  "staged_5deg_live_validation": {
+    "passed": true,
+    "requested_command_envelope_deg": 5.0,
+    "maximum_speed_deg_s": 3.0,
+    "duration_s": 25.0,
+    "arm_samples": 500,
+    "arm_command_replies": 500,
+    "maximum_command_deg": [5.0, 5.0, 4.482421875, 5.0, 5.0, 5.0],
+    "maximum_actual_excursion_deg": [5.0518798828125, 5.04486608505249, 4.2280731201171875, 5.042165279388428, 5.05096435546875, 5.047039031982422],
+    "largest_dynamic_overshoot_deg": 0.0518798828125,
+    "gripper_actions": 8,
+    "gripper_completed_actions": 2,
+    "gripper_safe_reversal_stops": 6,
+    "all_gripper_actions_verified_disabled": true,
+    "baseline_return_maximum_error_deg": 0.0000762939453125,
+    "cr5_final_disable_verified": true,
+    "cr5_final_error_status": 0,
+    "dm_final_disabled_no_fault": true,
+    "hard_warning_count": 0,
+    "evidence_log": "logs/uarm_cr5_full_teleop_20261110_172222.json"
+  },
+  "joint_limits_deg": [
+    [-360.0, 360.0],
+    [-360.0, 360.0],
+    [-160.0, 160.0],
+    [-360.0, 360.0],
+    [-360.0, 360.0],
+    [-360.0, 360.0]
+  ],
+  "joint_limit_margin_deg": 5.0,
+  "max_relative_offset_deg": [10.0, 10.0, 10.0, 10.0, 10.0, 10.0],
+  "max_speed_deg_s": [5.0, 5.0, 5.0, 8.0, 8.0, 8.0],
+  "rate_hz": 20.0,
+  "maximum_live_duration_s": 10.0
+}

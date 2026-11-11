@@ -1,0 +1,16 @@
+{
+  "timestamp_utc": "2026-11-11T07:26:18.524942+00:00",
+  "motor_id": 1,
+  "rid": 14,
+  "request_hex": "D5 4D 52 51 01 00 0E 94",
+  "operation": "DM parameter read (CAN 0x7FF/opcode 0x33)",
+  "gateway_ready_marker": false,
+  "gateway_startup_wait_completed": true,
+  "tcp_sent_bytes": 8,
+  "usb_log": "",
+  "tcp_reply_hex": "",
+  "can_response_observed": false,
+  "can_ack_observed": false,
+  "can_tx_failed_observed": false,
+  "can_bus_error_observed": false
+}

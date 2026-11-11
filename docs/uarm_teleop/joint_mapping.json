@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "leader": "U-Arm Config2 Feetech",
+  "follower": "Dobot CR10A",
+  "joint_correspondence": [
+    {
+      "leader": "joint1",
+      "follower": "joint1"
+    },
+    {
+      "leader": "joint2",
+      "follower": "joint2"
+    },
+    {
+      "leader": "joint3",
+      "follower": "joint3"
+    },
+    {
+      "leader": "joint4",
+      "follower": "joint4"
+    },
+    {
+      "leader": "joint5",
+      "follower": "joint5"
+    },
+    {
+      "leader": "joint6",
+      "follower": "joint6"
+    }
+  ],
+  "formula": "q_follower = follower_home + sign * scale * (q_leader - leader_zero)",
+  "units": "radian internally; clip files store degrees",
+  "leader_zero_deg": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "follower_home_deg": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "sign": [
+    1,
+    -1,
+    1,
+    1,
+    1,
+    1
+  ],
+  "scale": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+  ],
+  "follower_limits_deg": [
+    [
+      -360,
+      360
+    ],
+    [
+      -360,
+      360
+    ],
+    [
+      -160,
+      160
+    ],
+    [
+      -360,
+      360
+    ],
+    [
+      -360,
+      360
+    ],
+    [
+      -360,
+      360
+    ]
+  ],
+  "follower_velocity_limits_deg_s": [
+    150,
+    150,
+    180,
+    223,
+    223,
+    223
+  ],
+  "gripper": {
+    "enabled": true,
+    "leader_source": "separate scalar 0..1 (or U-Arm servo 7 after calibration)",
+    "follower": "virtual parallel gripper in simulation",
+    "range_m": [
+      0.0,
+      0.03
+    ]
+  },
+  "verification": {
+    "joint_index_correspondence": "verified from uploaded STEP axis topology",
+    "axis_relation_pattern": "J1⊥J2, J2∥J3, J3∥J4, J4⊥J5, J5⊥J6",
+    "sign_source": "default J2 inversion follows the official U-Arm Dobot CR5 follower example; CR10A hardware positive directions are NOT encoded in STEP and must be checked on real hardware",
+    "zero_offset": "simulation default only; real hardware requires startup calibration"
+  }
+}

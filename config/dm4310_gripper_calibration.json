@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "motor": "DM-J4310-2EC V1.2",
+  "motor_id": 1,
+  "pmax_rad": 12.5,
+  "vmax_rad_s": 30.0,
+  "tmax_nm": 10.0,
+  "open": {
+    "position_rad": -0.1479202089568297,
+    "position_raw": 32380,
+    "samples": 5,
+    "measured_at_local": "2026-11-11 20:29:37",
+    "source_log": "logs/dm4310_status_monitor_20261111_202937.json"
+  },
+  "closed": {
+    "position_rad": 5.211811232257789,
+    "position_raw": 46430,
+    "samples": 5,
+    "measured_at_local": "2026-11-10 15:39:47",
+    "source_log": "logs/dm4310_status_monitor_20261110_153947.json"
+  },
+  "mapping": {
+    "direction": "increasing_motor_angle_closes",
+    "travel_rad": 5.359731441214619,
+    "open_command_rad": -0.0979202089568294,
+    "close_command_rad": 5.301811232257789,
+    "endpoint_margin_rad": 0.05,
+    "open_endpoint_margin_rad": 0.05,
+    "close_endpoint_margin_rad": 0.01,
+    "close_adjustment_note": "2026-11-11 physical endpoints rebased by +2pi after stable feedback +5.211528 rad matched old closed endpoint -1.071374 rad modulo one revolution",
+    "coordinate_rebase_rad": 6.283185307179586
+  },
+  "move_profile": {
+    "name": "guarded_3x",
+    "setpoint_step_rad": 0.3,
+    "setpoint_delay_ms": 10,
+    "feedback_speed_abort_rad_s": 9.6,
+    "hardware_checks_retained": true,
+    "updated_at_local": "2026-11-11 21:15"
+  }
+}

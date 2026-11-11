@@ -1,0 +1,29 @@
+{
+  "timestamp_utc": "2026-11-11T12:23:28.654336+00:00",
+  "operation": "DM status refresh (official opcode 0xCC, read-only)",
+  "request_hex": "D5 4D 53 51 01 00 00 9B",
+  "scales": {
+    "PMAX": 12.5,
+    "VMAX": 30.0,
+    "TMAX": 10.0
+  },
+  "tcp_sent_bytes": 8,
+  "usb_log": "CAN install=ESP_OK mode=NORMAL bitrate_kbps=1000\nCAN start=ESP_OK\nDM_STATUS_TX motor_id=0x001 result=ESP_OK data=01 00 CC 00 00 00 00 00\r\nCAN_ALERTS mask=0x00000006 TX_SUCCESS RX_DATA\r\nCAN_STATUS reason=alert state=RUNNING tx_queue=0 rx_queue=1 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nDM_STATUS_TX ACK\r\nCAN_RX id=0x000 ext=0 rtr=0 dlc=8 data=01 76 07 7F F7 FE 1E 1B\r\n",
+  "response_observed": true,
+  "response_packet_hex": "D5 4D 52 50 00 00 00 08 01 76 07 7F F7 FE 1E 1B 91",
+  "feedback": {
+    "response_can_id": 0,
+    "data_hex": "01 76 07 7F F7 FE 1E 1B",
+    "motor_id_low_nibble": 1,
+    "error_code": 0,
+    "state": "disabled/no fault",
+    "position_raw": 30215,
+    "position_rad": -0.9737163347829405,
+    "velocity_raw": 2047,
+    "velocity_rad_s": -0.0073260073260073,
+    "torque_raw": 2046,
+    "torque_nm": -0.0073260073260073,
+    "mos_temperature_c": 30,
+    "rotor_temperature_c": 27
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "timestamp_utc": "2026-11-11T12:07:11.733311+00:00",
+  "operation": "DM status refresh (official opcode 0xCC, read-only)",
+  "request_hex": "D5 4D 53 51 01 00 00 9B",
+  "scales": {
+    "PMAX": 12.5,
+    "VMAX": 30.0,
+    "TMAX": 10.0
+  },
+  "tcp_sent_bytes": 8,
+  "usb_log": "CAN install=ESP_OK mode=NORMAL bitrate_kbps=1000\nCAN start=ESP_OK\nDM_STATUS_TX motor_id=0x001 result=ESP_OK data=01 00 CC 00 00 00 00 00\r\nCAN_ALERTS mask=0x00000002 TX_SUCCESS\r\nCAN_STATUS reason=alert state=RUNNING tx_queue=0 rx_queue=0 tx_err=0 rx_err=0 tx_failed=0 bus_errors=0 arb_lost=0\nDM_STATUS_TX ACK\r\n",
+  "response_observed": false
+}
