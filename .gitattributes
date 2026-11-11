@@ -1,0 +1,6 @@
+*.step binary
+*.stp binary
+*.brep binary
+*.stl binary
+*.sldasm binary
+*.sldprt binary
