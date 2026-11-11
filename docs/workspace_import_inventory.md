@@ -10,7 +10,7 @@ This import was assembled from the local robot workspace. It keeps project sourc
 - The two T-CAN485 PlatformIO gateway source projects (`platformio.ini`, `README.md`, and `src/main.cpp` only). PlatformIO build folders and compiled binaries were omitted.
 - The 28 generated simulation files: scene/model XML, URDF, mesh exports, and supporting evidence JSON.
 - User-created wiring diagrams, U-Arm trigger CAD, R66/R67 gripper CAD, and CR5AF connector-design candidate files. The B601-DM two-piece adapter is under `assets/reference_adapters/` and remains labeled as a different gripper design.
-- 105 selected read-only feedback/query logs under `evidence/read_only/raw_logs/`: 44 CR5 30004 feedback captures, 17 DM4310 read probes, 7 DM4310 status probes, 7 DM4310 status monitors, 4 RS485 gateway probes, 19 gateway identity records, 2 DM4310 register audits, and 5 other read-only status/run records.
+- 144 selected read-only feedback, query, preview, and simulation records under `evidence/read_only/raw_logs/`: 54 CR5 30004 feedback captures, 17 DM4310 read probes, 7 DM4310 status probes, 7 DM4310 status monitors, 4 RS485 gateway probes, 19 gateway identity records, 2 DM4310 register audits, 5 other read-only status/run records, 13 U-Arm/Dobot previews, 3 teleoperation previews, 3 Dobot digital-twin captures, 3 synthetic twin captures, 3 U-Arm twin captures, and 4 U-Arm power-monitor records.
 
 ## Deliberately not imported
 
@@ -19,7 +19,7 @@ This import was assembled from the local robot workspace. It keeps project sourc
 - Unrelated hexapod, CR10 workstation, camera-stand, and other independent project trees.
 - Full upstream repository clones, the CR10A-focused teleoperation simulation archive, duplicate archives, and downloaded source archives. The audit documents retain upstream links where relevant.
 - Dobot, Damiao, and gateway vendor manuals, software installers, and other vendor-distributed files without an identified redistribution license. Use the official links in the audit documents.
-- The broad local logs tree, including motion, enable, error-clear, configuration-write, control-stream, and screenshot records. Only the selected read-only status/query records were copied.
+- The broad local logs tree, including motion, enable, error-clear, configuration-write, control-stream, and screenshot records. Only selected read-only status, preview, and simulation records were copied.
 - The separate local `tests/` directory and the U-Arm/CR5 continuous-control launch scripts.
 
 ## Import checks

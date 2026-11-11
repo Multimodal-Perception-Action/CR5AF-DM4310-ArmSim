@@ -7,10 +7,10 @@ This repository collects the CR5AF / CC262 communication audits, DM-J4310-2EC V1
 - `src/`: Python status, simulation, integration, and hardware-facing programs.
 - `firmware/`: T-CAN485 ESP32 gateway source; build output is excluded.
 - `simulation/`: generated MuJoCo URDFs, scenes, and mesh assets.
-- `assets/`: custom gripper geometry, wiring diagrams, U-Arm trigger models, and a separately labeled B601-DM adapter reference.
+- `assets/`: custom gripper geometry, wiring diagrams, U-Arm trigger models, and connector-design candidates.
 - `config/`: example and project calibration/configuration JSON files.
 - `docs/`: protocol/API audits, integration notes, calibration and simulation guidance.
-- `evidence/read_only/raw_logs/`: selected status/query logs only.
+- `evidence/read_only/raw_logs/`: selected status/query, preview, and simulation logs.
 
 ## Bench communication path
 
@@ -30,6 +30,6 @@ The `config/` folder includes machine-specific calibration values. Review them b
 
 ## Verification status
 
-The selected evidence logs contain read-only feedback and query records. Movement, enable, error-clear, configuration-write, and control-stream logs are not included in this evidence set. No hardware command was sent during this repository import. No tests were run as part of the import.
+The selected evidence logs contain read-only feedback/query records and preview or offline simulation captures. Movement, enable, error-clear, configuration-write, and control-stream logs are not included in this evidence set. No hardware command was sent during this repository import. No tests were run as part of the import.
 
 See `docs/verification-status.md`, `docs/tcp_mode_audit.md`, `docs/dm4310_v4_protocol_audit.md`, and `docs/can_direct_connection.md` for evidence-backed status and official references. See `docs/workspace_import_inventory.md` for the import scope.
