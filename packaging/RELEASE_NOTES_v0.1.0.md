@@ -2,6 +2,8 @@
 
 首个 Windows x64 公开预发布版，面向当前 U-Arm / FE-URT-2、Dobot CR5AF / CC262 和 DM-J4310-2EC V1.2 夹爪原型。
 
+完整中文使用说明：<https://github.com/Multimodal-Perception-Action/CR5AF-DM4310-ArmSim/blob/main/docs/usage_guide_cn.md>
+
 ## 包含内容
 
 - 一键安装与启动入口；依赖和 Python 运行时可离线安装。

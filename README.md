@@ -2,6 +2,9 @@
 
 This repository collects the CR5AF / CC262 communication audits, DM-J4310-2EC V1.2 gateway work, U-Arm teleoperation integration, simulation assets, calibration/configuration data, and custom gripper CAD used in this project.
 
+中文安装、仿真、真机遥操、停止恢复和 T-CAN485 固件说明：
+[`docs/usage_guide_cn.md`](docs/usage_guide_cn.md)
+
 ## Project folders
 
 - `src/`: Python status, simulation, integration, and hardware-facing programs.
