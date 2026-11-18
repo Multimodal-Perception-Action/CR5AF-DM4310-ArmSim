@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "status": "unmeasured",
+  "mount": null,
+  "parent_frame": null,
+  "child_frame": null,
+  "coordinate_convention": "p_parent = R_parent_child * p_child + t_parent_child",
+  "translation_unit": "m",
+  "handedness": "right",
+  "rotation_parent_child_3x3": null,
+  "translation_parent_child_m": null,
+  "image_size_px": null,
+  "image_channel": null,
+  "image_space": null,
+  "holdout": {
+    "sample_count": null,
+    "reprojection_rmse_px": null,
+    "position_rmse_m": null
+  }
+}
