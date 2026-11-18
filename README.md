@@ -5,6 +5,12 @@ This repository collects the CR5AF / CC262 communication audits, DM-J4310-2EC V1
 中文安装、仿真、真机遥操、停止恢复和 T-CAN485 固件说明：
 [`docs/usage_guide_cn.md`](docs/usage_guide_cn.md)
 
+## V2R1 公开交接
+
+[查看 V2R1 交接目录](handoff/v2r1/README.md)，包含 11 月 16 日的六个 V2R1 零件 STEP/STL、CR5AF 本体 URDF、标定模板和离线组合仿真生成工具。运行生成命令前，先进入仓库内的 **handoff/v2r1** 目录。
+
+[只下载 V2R1 公开交接 ZIP](https://github.com/Multimodal-Perception-Action/CR5AF-DM4310-ArmSim/archive/259071866323727ac616efd89ca59415c5951b4d.zip)
+
 ## Project folders
 
 - `src/`: Python status, simulation, integration, and hardware-facing programs.
