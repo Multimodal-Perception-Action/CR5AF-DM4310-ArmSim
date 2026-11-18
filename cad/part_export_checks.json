@@ -1,0 +1,68 @@
+{
+  "assembly_source_sha256": "f9a2454920fc78a71980999879a03f84fa502550717885a127a9fcd8ae256181",
+  "cad_export_date": "2026-11-16",
+  "units": "mm",
+  "frame": "V2R1 mechanical flange F",
+  "parts": {
+    "01_Direct_Base": {
+      "stl_triangles": 5632,
+      "stl_watertight": true,
+      "step_brep_valid": true,
+      "extents_mm": [
+        79.975,
+        95.969,
+        28.5
+      ]
+    },
+    "02_Fuse_Cartridge_D8": {
+      "stl_triangles": 3122,
+      "stl_watertight": true,
+      "step_brep_valid": true,
+      "extents_mm": [
+        38.0,
+        22.0,
+        15.6
+      ]
+    },
+    "03_Cartridge_Retaining_Pin": {
+      "stl_triangles": 902,
+      "stl_watertight": true,
+      "step_brep_valid": true,
+      "extents_mm": [
+        7.495,
+        7.498,
+        10.8
+      ]
+    },
+    "04_Camera_Module_Short45": {
+      "stl_triangles": 1744,
+      "stl_watertight": true,
+      "step_brep_valid": true,
+      "extents_mm": [
+        54.4,
+        109.368,
+        116.354
+      ]
+    },
+    "05_Side_Pad_L": {
+      "stl_triangles": 12,
+      "stl_watertight": true,
+      "step_brep_valid": true,
+      "extents_mm": [
+        1.4,
+        11.597,
+        11.597
+      ]
+    },
+    "05_Side_Pad_R": {
+      "stl_triangles": 12,
+      "stl_watertight": true,
+      "step_brep_valid": true,
+      "extents_mm": [
+        1.4,
+        11.597,
+        11.597
+      ]
+    }
+  }
+}
